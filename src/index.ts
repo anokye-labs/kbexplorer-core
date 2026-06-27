@@ -6,11 +6,18 @@
  * interface seams that both `kbexplorer-cli` and `kbexplorer-template` (and any
  * third-party provider) depend on, so the contract lives in exactly one place.
  *
- * Phase 1 stands up this package; subsequent tasks fill it in:
- *   - graph types (KBNode / KBEdge / KBGraph / KBConfig)
- *   - identity / URN (`kg://`) + relation taxonomy
- *   - Source / GraphProvider / Representation interfaces
+ * What lives here:
+ *   - graph types (KBNode / KBEdge / KBGraph / Cluster / Connection / NodeSource)
+ *   - the JSON-LD envelope + `buildJsonLd` helper
+ *   - the knowledge-base configuration contract (KBConfig)
+ *
+ * Subsequent tasks add: identity / URN (`kg://`) + the relation taxonomy, and
+ * the Source / GraphProvider / Representation interface seams.
  */
+
+export * from './graph.js';
+export * from './jsonld.js';
+export * from './config.js';
 
 /** Semantic version of the contract surface exported by this package. */
 export const KBEXPLORER_CORE_VERSION = '0.0.0' as const;
