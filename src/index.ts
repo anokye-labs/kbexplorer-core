@@ -10,14 +10,17 @@
  *   - graph types (KBNode / KBEdge / KBGraph / Cluster / Connection / NodeSource)
  *   - the JSON-LD envelope + `buildJsonLd` helper
  *   - the knowledge-base configuration contract (KBConfig)
+ *   - `kg://` identity URN helpers + the canonical relation taxonomy
  *
- * Subsequent tasks add: identity / URN (`kg://`) + the relation taxonomy, and
- * the Source / GraphProvider / Representation interface seams.
+ * Subsequent tasks add: the Source / GraphProvider / Representation interface
+ * seams.
  */
 
 export * from './graph.js';
 export * from './jsonld.js';
 export * from './config.js';
+export * from './identity.js';
+export * from './relations.js';
 
 /** Semantic version of the contract surface exported by this package. */
 export const KBEXPLORER_CORE_VERSION = '0.0.0' as const;
