@@ -7,7 +7,7 @@
  * engine resolves providers in dependency order and fails fast if a required
  * affordance is unmet. This module is pure contract — no registry, no engine.
  */
-import type { KBConfig } from './config.js';
+import type { ExternalProviderConfig, KBConfig } from './config.js';
 import type { KBEdge, KBNode } from './graph.js';
 import type { Affordance, Source } from './source.js';
 
@@ -42,4 +42,37 @@ export interface GraphProvider {
   requiredAffordances?: Affordance[];
   /** Resolve this provider's graph fragment. */
   resolve(context: ProviderContext): Promise<ProviderResult>;
+}
+
+/**
+ * Builds a {@link GraphProvider} from its {@link ExternalProviderConfig} entry.
+ * This is the unit a loadable provider module exposes.
+ */
+export type ProviderFactory = (config: ExternalProviderConfig) => GraphProvider;
+
+/**
+ * The shape a loadable provider module's default export must satisfy. A consumer
+ * dynamic-imports the module by specifier and calls `module.default(config)`.
+ */
+export interface ProviderModule {
+  default: ProviderFactory;
+}
+
+/**
+ * Identity helper that authors wrap their factory in so a module's default
+ * export is recognizably a provider entry point and gets full type-checking:
+ *
+ * ```ts
+ * import { defineProvider } from '@anokye-labs/kbexplorer-core';
+ * export default defineProvider((config) => ({
+ *   id: `my-provider-${config.name ?? 'default'}`,
+ *   name: 'My Provider',
+ *   async resolve({ existingNodes }) { return { nodes: [], edges: [] }; },
+ * }));
+ * ```
+ *
+ * It performs no work at import time — pure contract.
+ */
+export function defineProvider(factory: ProviderFactory): ProviderFactory {
+  return factory;
 }
