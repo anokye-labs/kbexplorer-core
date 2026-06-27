@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  defineProvider,
   hasAffordance,
   stagingAreaLink,
   STAGING_AREA_REL,
+  type ExternalProviderConfig,
   type GraphProvider,
   type ProviderContext,
+  type ProviderModule,
   type Representation,
   type Resource,
   type Source,
@@ -68,6 +71,44 @@ describe('GraphProvider contract', () => {
     const result = await provider.resolve({ config: {} as never, existingNodes: [] });
     expect(result).toEqual({ nodes: [], edges: [] });
     expect(provider.requiredAffordances).toEqual(['read']);
+  });
+});
+
+describe('ProviderFactory / defineProvider contract', () => {
+  it('returns the factory unchanged (pure identity) and builds a provider', () => {
+    const factory = defineProvider((config: ExternalProviderConfig) => ({
+      id: `example-${config.name ?? 'default'}`,
+      name: 'Example',
+      async resolve(_ctx: ProviderContext) {
+        return { nodes: [], edges: [] };
+      },
+    }));
+
+    const provider = factory({ type: 'custom', name: 'demo' });
+    expect(provider.id).toBe('example-demo');
+    expect(provider.name).toBe('Example');
+  });
+
+  it('a module default export satisfies ProviderModule', () => {
+    const mod: ProviderModule = {
+      default: defineProvider(() => ({
+        id: 'mod',
+        name: 'Mod',
+        async resolve() {
+          return { nodes: [], edges: [] };
+        },
+      })),
+    };
+    expect(typeof mod.default).toBe('function');
+  });
+
+  it('accepts an open custom type and a module specifier on the config', () => {
+    const config: ExternalProviderConfig = {
+      type: 'my-bespoke-source',
+      module: './providers/my-bespoke-source.js',
+    };
+    expect(config.type).toBe('my-bespoke-source');
+    expect(config.module).toBe('./providers/my-bespoke-source.js');
   });
 });
 

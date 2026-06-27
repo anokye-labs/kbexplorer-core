@@ -50,14 +50,26 @@ export interface BrandingConfig {
 
 /** Configuration for an external provider plugin. */
 export interface ExternalProviderConfig {
-  /** Provider type identifier. */
-  type: 'wikipedia' | 'orgchart' | 'custom';
+  /**
+   * Provider type identifier. The first-party built-ins are named explicitly;
+   * the open `(string & {})` arm lets locally- or third-party-loaded providers
+   * declare their own type without a core change. When `module` is set, `type`
+   * is advisory (the module's default export determines behavior).
+   */
+  type: 'wikipedia' | 'orgchart' | 'custom' | (string & {});
   /** Human-readable name. */
   name?: string;
   /** Cluster to assign nodes to. */
   cluster?: string;
   /** Provider-specific options. */
   options?: Record<string, unknown>;
+  /**
+   * ES-module specifier (bare package name or relative path) whose default
+   * export is a {@link ProviderFactory} created with `defineProvider()`. The
+   * consumer dynamic-imports it and runs it in dependency order. Enables
+   * local (and, later, third-party) providers with no core code change.
+   */
+  module?: string;
 }
 
 /** Full knowledge base configuration (from config.yaml). */
