@@ -11,7 +11,7 @@
  *   - the JSON-LD envelope + `buildJsonLd` helper
  *   - the knowledge-base configuration contract (KBConfig)
  *   - `kg://` identity URN helpers + the canonical relation taxonomy
- *   - the Source / GraphProvider / Representation interface seams
+ *   - the Source / GraphProvider / GraphStore / Representation interface seams
  */
 
 export * from './graph.js';
@@ -21,6 +21,7 @@ export * from './identity.js';
 export * from './relations.js';
 export * from './source.js';
 export * from './provider.js';
+export * from './graph-store.js';
 export * from './representation.js';
 
 /** Semantic version of the contract surface exported by this package. */

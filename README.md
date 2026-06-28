@@ -17,8 +17,9 @@ and interfaces, no runtime engine, no I/O.
   node ids.
 - **Relation taxonomy** — the canonical edge-relation vocabulary.
 - **JSON-LD helpers** — deterministic serialization of the pure graph.
-- **Seams** — the `Source`, `GraphProvider`, and `Representation` interfaces that
-  make providers and render targets pluggable.
+- **Seams** — the `Source`, `GraphProvider`, `GraphStore`, and `Representation`
+  interfaces that make providers, optional content-addressed caches, and render
+  targets pluggable.
 
 > Phase 1 stands up the package; the contracts above are filled in by the
 > follow-up tasks tracked in this repo.
