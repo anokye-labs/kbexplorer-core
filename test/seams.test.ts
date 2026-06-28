@@ -2,11 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import {
   defineProvider,
+  formatContentHash,
+  formatGraphStoreCacheKey,
   hasAffordance,
   stagingAreaLink,
+  GRAPH_STORE_API_VERSION,
+  GRAPH_STORE_CACHE_KEY_VERSION,
   STAGING_AREA_REL,
+  type ContentHash,
   type ExternalProviderConfig,
   type GraphProvider,
+  type GraphStore,
+  type GraphStoreCacheKey,
   type ProviderContext,
   type ProviderModule,
   type Representation,
@@ -109,6 +116,63 @@ describe('ProviderFactory / defineProvider contract', () => {
     };
     expect(config.type).toBe('my-bespoke-source');
     expect(config.module).toBe('./providers/my-bespoke-source.js');
+  });
+});
+
+describe('GraphStore contract', () => {
+  const contentHash: ContentHash = {
+    algorithm: 'sha256',
+    digest: 'abc123',
+  };
+
+  const key: GraphStoreCacheKey = {
+    scope: 'provider-result',
+    providerId: 'files',
+    sourceId: 'local-worktree',
+    contentHash,
+    variant: 'provider-options:v1',
+  };
+
+  it('formats content hashes and cache keys deterministically', () => {
+    expect(GRAPH_STORE_API_VERSION).toBe('1.0.0');
+    expect(formatContentHash(contentHash)).toBe('sha256:hex:abc123');
+    expect(formatGraphStoreCacheKey(key)).toBe(
+      `${GRAPH_STORE_CACHE_KEY_VERSION}/provider-result/files/local-worktree/sha256:hex:abc123/provider-options%3Av1`,
+    );
+  });
+
+  it('allows a consumer-owned store to cache content-addressed provider results', async () => {
+    const records = new Map<string, Awaited<ReturnType<GraphStore['get']>>>();
+    const store: GraphStore = {
+      async get(cacheKey) {
+        return records.get(formatGraphStoreCacheKey(cacheKey));
+      },
+      async put(entry) {
+        records.set(formatGraphStoreCacheKey(entry.key), entry);
+      },
+      async delete(cacheKey) {
+        return records.delete(formatGraphStoreCacheKey(cacheKey));
+      },
+      async invalidate(match) {
+        let removed = 0;
+        for (const [recordKey, record] of records) {
+          if (
+            record &&
+            (match.providerId === undefined || record.key.providerId === match.providerId) &&
+            (match.sourceId === undefined || record.key.sourceId === match.sourceId)
+          ) {
+            records.delete(recordKey);
+            removed += 1;
+          }
+        }
+        return removed;
+      },
+    };
+
+    await store.put({ key, value: { nodes: [], edges: [] } });
+    expect(await store.get(key)).toMatchObject({ value: { nodes: [], edges: [] } });
+    await expect(store.invalidate({ providerId: 'files' })).resolves.toBe(1);
+    await expect(store.get(key)).resolves.toBeUndefined();
   });
 });
 
