@@ -172,6 +172,13 @@ export interface Connection {
   weight?: number;
   /** Optional relationship label from the relation taxonomy (carried onto the edge). */
   relation?: string;
+  /**
+   * The source's **original** relation label, preserved verbatim when it does
+   * not map onto the canonical taxonomy (see {@link mapRelation}). Lets an
+   * authored connection keep its native vocabulary alongside the normalized
+   * `relation`. Additive; absent → unchanged behavior.
+   */
+  relationRaw?: string;
 }
 
 /**
@@ -276,6 +283,15 @@ export interface KBEdge extends Provenance {
    * the structural `type`.
    */
   relation?: string;
+  /**
+   * The source's **original** relation label, preserved verbatim when it falls
+   * outside the 6-relation taxonomy and {@link mapRelation} would otherwise drop
+   * it (the mapped `relation` collapses to a canonical value or `related`).
+   * Supports the *open relations* axis (anokye-labs/kbexplorer#12) — an edge is
+   * not forced to forget its native vocabulary. A plain string, so it
+   * round-trips through JSON-LD unchanged. Additive; absent → unchanged.
+   */
+  relationRaw?: string;
   /**
    * How this edge was asserted (observed vs derived) and, for derived edges,
    * the inputs it was computed from — so a change to an input is detectable for
