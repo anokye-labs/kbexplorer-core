@@ -152,6 +152,24 @@ export function buildId(type: unknown, key: unknown): string {
 }
 
 /**
+ * Build the opaque identity body for a person from a corporate alias. The alias
+ * — never a display name (display names are not unique within an org) — is the
+ * stable, source-agnostic referent for the person.
+ */
+export function aliasBody(alias: unknown): string {
+  return slugify(alias);
+}
+
+/**
+ * Mint a person's identity address from a corporate alias:
+ * `buildAddress(aliasBody(alias), opts)`. The address body is the opaque alias
+ * and carries no type; the person's display name is data, not identity.
+ */
+export function buildPersonAddress(alias: unknown, opts: AddressingOptions = {}): string {
+  return buildAddress(aliasBody(alias), opts);
+}
+
+/**
  * Build a deterministic edge address
  * `<scheme>://[<authority>/]edge/<from>~<relation>~<to>` from endpoints +
  * relation. Endpoints are scheme-stripped first. With default options the output

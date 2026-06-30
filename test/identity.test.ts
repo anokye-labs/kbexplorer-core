@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ADDRESS_RE,
+  aliasBody,
   buildAddress,
   buildEdgeId,
   buildId,
+  buildPersonAddress,
   DEFAULT_SCHEME,
   ID_RE,
   isAddress,
@@ -114,6 +116,36 @@ describe('configurable addressing', () => {
     expect(isAddress('not-an-address')).toBe(false);
     expect(isAddress('kg://')).toBe(false);
     expect(isAddress(42)).toBe(false);
+  });
+});
+
+describe('alias-based person identity', () => {
+  it('aliasBody mints an opaque slug with no type prefix', () => {
+    expect(aliasBody('A. Lovelace')).toBe('a-lovelace');
+    expect(aliasBody('alovelace')).toBe('alovelace');
+    // The body is just the slugified alias — it carries no type segment.
+    expect(aliasBody('A. Lovelace')).not.toContain('person');
+    expect(aliasBody('A. Lovelace')).not.toContain('/');
+  });
+
+  it('buildPersonAddress mints kg://<authority>/<alias> with no type segment', () => {
+    const addr = buildPersonAddress('alovelace', { authority: 'directory' });
+    expect(addr).toBe('kg://directory/alovelace');
+    expect(addr).not.toContain('person');
+    expect(isAddress(addr)).toBe(true);
+  });
+
+  it('is alias-stable regardless of source login or display name', () => {
+    // Two witnesses with different GitHub logins but the same corporate alias.
+    const witnessA = { login: 'ada-gh', displayName: 'Ada Lovelace', alias: 'alovelace' };
+    const witnessB = { login: 'countess-99', displayName: 'The Countess', alias: 'alovelace' };
+
+    // Identity depends only on the alias body — never on the login.
+    expect(buildPersonAddress(witnessA.alias)).toBe('kg://alovelace');
+    expect(buildPersonAddress(witnessA.alias)).toBe(buildPersonAddress(witnessB.alias));
+
+    // A different display name does NOT change the address.
+    expect(buildPersonAddress('alovelace')).toBe(buildPersonAddress('alovelace'));
   });
 });
 

@@ -85,6 +85,31 @@ describe('graph contract', () => {
     expect(sources).toHaveLength(15);
   });
 
+  it('keys a person by an opaque alias, with the display name as data/title (not identity)', () => {
+    const source: NodeSource = { type: 'person', login: 'ada-gh', linked: true, alias: 'alovelace' };
+    const node: KBNode = {
+      id: 'kg://directory/alovelace',
+      title: 'Ada Lovelace',
+      cluster: 'people',
+      content: '',
+      rawContent: '',
+      connections: [],
+      source,
+      identity: 'kg://directory/alovelace',
+      entityType: 'person',
+      data: { displayName: 'Ada Lovelace' },
+    };
+
+    // The alias is the source-agnostic identity key; login is the back-compat witness.
+    expect(source.type === 'person' && source.alias).toBe('alovelace');
+    expect(source.type === 'person' && source.login).toBe('ada-gh');
+    // The display name lives in title/data — never in the identity.
+    expect(node.title).toBe('Ada Lovelace');
+    expect(node.data?.displayName).toBe('Ada Lovelace');
+    expect(node.identity).toBe('kg://directory/alovelace');
+    expect(node.identity).not.toContain('Ada');
+  });
+
   it('accepts yaml, json and markdown as NodeSourceFile.format', () => {
     const yamlFile: NodeSourceFile = {
       path: 'content-model/people/ada.yaml',

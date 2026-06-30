@@ -129,12 +129,14 @@ export type NodeSource =
   /** A GitHub release (tag, name, release notes, prerelease flag). */
   | { type: 'release'; tag: string; prerelease: boolean }
   /**
-   * A person node derived from GitHub activity (author/assignee on active
-   * issues / PRs). When a content-model person descriptor matches (same
-   * alias/login), `linked` is set to true and the identity URN is reused
+   * A person node. `alias` is the source-agnostic, stable identity key (a
+   * corporate alias); the person's display name lives in the node's
+   * `title`/`data`, never in the identity. `login` remains the GitHub-source
+   * witness for back-compat — when a content-model person descriptor matches
+   * (same alias/login), `linked` is set to true and the identity URN is reused
    * from the descriptor rather than minted fresh.
    */
-  | { type: 'person'; login: string; linked: boolean };
+  | { type: 'person'; login: string; linked: boolean; alias?: string };
 
 /**
  * A JSON-LD envelope carried by a typed / structured node.
