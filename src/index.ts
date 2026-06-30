@@ -23,6 +23,7 @@ export * from './source.js';
 export * from './provider.js';
 export * from './graph-store.js';
 export * from './representation.js';
+export * from './presentation.js';
 
 /** Semantic version of the contract surface exported by this package. */
 export const KBEXPLORER_CORE_VERSION = '0.1.0' as const;

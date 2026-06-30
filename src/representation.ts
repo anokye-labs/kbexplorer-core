@@ -13,6 +13,7 @@
  * hyperlinks to retrieve more on demand. It NEVER serializes the whole graph.
  */
 import type { KBGraph } from './graph.js';
+import type { PresentationTokens } from './presentation.js';
 
 /** A rendering target. Open so consumers can register their own. */
 export type RepresentationTarget =
@@ -30,6 +31,12 @@ export interface RepresentationOptions {
   anchors?: string[];
   /** Token budget for budgeted targets (e.g. `llm-context`). */
   tokenBudget?: number;
+  /**
+   * Optional host-neutral presentation tokens (typography, corner radius,
+   * density, spacing) a visual target may honor. Open/loose — absent means
+   * "inherit the active theme". See {@link PresentationTokens}.
+   */
+  presentation?: PresentationTokens;
   [key: string]: unknown;
 }
 
