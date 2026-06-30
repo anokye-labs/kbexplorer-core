@@ -15,6 +15,7 @@
  */
 
 export * from './graph.js';
+export * from './source-ref.js';
 export * from './jsonld.js';
 export * from './config.js';
 export * from './identity.js';

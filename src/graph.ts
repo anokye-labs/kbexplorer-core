@@ -7,6 +7,7 @@
  * the SPA, the JSON-LD serializer, and the LLM-context representation. Visual
  * concerns (edge colors, viewers, layout) live in the consumer, never here.
  */
+import type { Provenance } from './source-ref.js';
 
 /**
  * How a node's content should be rendered.
@@ -171,8 +172,14 @@ export interface Connection {
   relation?: string;
 }
 
-/** A node in the knowledge graph. */
-export interface KBNode {
+/**
+ * A node in the knowledge graph.
+ *
+ * Extends {@link Provenance}: a node keeps its required `source` and may
+ * additionally carry `sourceId` / `sourceRefs` / `evidence` pointing back to the
+ * resources that support it (additive; absent → unchanged behavior).
+ */
+export interface KBNode extends Provenance {
   id: string;
   title: string;
   cluster: string;
@@ -224,8 +231,14 @@ export interface KBNode {
   pageTheme?: PageTheme;
 }
 
-/** A resolved, directed edge in the knowledge graph. */
-export interface KBEdge {
+/**
+ * A resolved, directed edge in the knowledge graph.
+ *
+ * Extends {@link Provenance}: an edge may additionally carry `sourceId` /
+ * `sourceRefs` / `evidence` so a relationship assertion can point back to the
+ * resources that support it (additive; absent → unchanged behavior).
+ */
+export interface KBEdge extends Provenance {
   from: string;
   to: string;
   type: EdgeType;
