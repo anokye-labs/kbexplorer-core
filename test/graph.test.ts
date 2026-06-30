@@ -124,4 +124,29 @@ describe('config contract', () => {
     };
     expect(config.source.repo).toBe('kbexplorer');
   });
+
+  it('admits the optional identity addressing block', () => {
+    const config: KBConfig = {
+      title: 'kb',
+      source: { owner: 'anokye-labs', repo: 'kbexplorer' },
+      identity: {
+        scheme: 'org-kb',
+        authority: 'directory',
+        sourceAuthorities: { calendar: 'calendar', docs: 'documents' },
+      },
+      clusters: { root: { name: 'Root', color: '#fff' } },
+      visuals: { mode: 'emoji', fallback: 'none' },
+      theme: { default: 'dark' },
+      graph: { physics: true, layout: 'force-atlas-2' },
+      features: {
+        hud: true,
+        minimap: true,
+        readingTools: true,
+        keyboardNav: true,
+        sparkAnimation: false,
+      },
+    };
+    expect(config.identity?.scheme).toBe('org-kb');
+    expect(config.identity?.sourceAuthorities?.calendar).toBe('calendar');
+  });
 });

@@ -13,8 +13,14 @@ and interfaces, no runtime engine, no I/O.
 
 - **Graph types** — `KBNode` / `KBEdge` / `KBGraph` / `KBConfig` (pure data; no
   styling, no engine imports).
-- **Identity** — the `kg://` URN scheme and helpers for minting/parsing stable
-  node ids.
+- **Identity** — configurable, source-agnostic addresses of the form
+  `<scheme>://<authority>/<body>`. The scheme is configurable (default `kg`), the
+  authority is optional (it names the system of record), and the **body is
+  opaque** — it names a resource and does not encode the entity's type, so an
+  entity can be re-typed or re-homed without its id changing. Mint addresses with
+  `buildAddress(body, { scheme, authority })`; configure defaults via
+  `KBConfig.identity`. The legacy `kg://<type>/<slug>` helpers (`buildId` /
+  `ID_RE`) are retained for back-compat.
 - **Relation taxonomy** — the canonical edge-relation vocabulary.
 - **JSON-LD helpers** — deterministic serialization of the pure graph.
 - **Seams** — the `Source`, `GraphProvider`, `GraphStore`, and `Representation`

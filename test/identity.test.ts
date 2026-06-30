@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  ADDRESS_RE,
+  buildAddress,
   buildEdgeId,
   buildId,
+  DEFAULT_SCHEME,
   ID_RE,
+  isAddress,
   isKnownRelation,
   KNOWN_RELATIONS,
   mapRelation,
+  normalizeScheme,
   normalizeType,
+  parseAddress,
   slugify,
   stripScheme,
   TYPE_RE,
@@ -55,6 +61,75 @@ describe('kg:// URN builders', () => {
   it('stripScheme is idempotent', () => {
     expect(stripScheme('kg://person/ada')).toBe('person/ada');
     expect(stripScheme('person/ada')).toBe('person/ada');
+  });
+});
+
+describe('configurable addressing', () => {
+  it('mints an opaque address with no embedded type (default scheme)', () => {
+    const addr = buildAddress('ada-lovelace');
+    expect(addr).toBe('kg://ada-lovelace');
+    expect(isAddress(addr)).toBe(true);
+  });
+
+  it('honors a configured scheme and optional authority', () => {
+    expect(buildAddress('ada-lovelace', { scheme: 'org-kb', authority: 'directory' })).toBe(
+      'org-kb://directory/ada-lovelace',
+    );
+    expect(buildAddress('ada-lovelace', { scheme: 'kb' })).toBe('kb://ada-lovelace');
+  });
+
+  it('treats the body as opaque — no type is encoded or required', () => {
+    const addr = buildAddress('ada-lovelace', { authority: 'directory' });
+    expect(addr).toBe('kg://directory/ada-lovelace');
+    expect(addr).not.toContain('person');
+  });
+
+  it('falls back to the default scheme on a malformed/absent scheme', () => {
+    expect(normalizeScheme('')).toBe(DEFAULT_SCHEME);
+    expect(normalizeScheme('Not A Scheme!')).toBe(DEFAULT_SCHEME);
+    expect(normalizeScheme('org-kb')).toBe('org-kb');
+    expect(buildAddress('x', { scheme: 'NOPE!' })).toBe('kg://x');
+  });
+
+  it('round-trips deterministically through parseAddress', () => {
+    const addr = buildAddress('ada-lovelace', { scheme: 'org-kb', authority: 'directory' });
+    const parsed = parseAddress(addr, { authority: 'directory' });
+    expect(parsed).toEqual({ scheme: 'org-kb', authority: 'directory', body: 'ada-lovelace' });
+    expect(buildAddress(parsed.body, { scheme: parsed.scheme, authority: parsed.authority })).toBe(
+      addr,
+    );
+  });
+
+  it('parses scheme + opaque body, extracting no meaning by default', () => {
+    expect(parseAddress('kg://directory/ada-lovelace')).toEqual({
+      scheme: 'kg',
+      body: 'directory/ada-lovelace',
+    });
+  });
+
+  it('isAddress / ADDRESS_RE guard well-formed addresses', () => {
+    expect(isAddress('kg://ada')).toBe(true);
+    expect(isAddress('org-kb://directory/ada')).toBe(true);
+    expect(ADDRESS_RE.test('kb://x')).toBe(true);
+    expect(isAddress('not-an-address')).toBe(false);
+    expect(isAddress('kg://')).toBe(false);
+    expect(isAddress(42)).toBe(false);
+  });
+});
+
+describe('scheme-aware stripScheme / buildEdgeId', () => {
+  it('stripScheme removes any scheme by default, or an explicit one', () => {
+    expect(stripScheme('org-kb://directory/ada')).toBe('directory/ada');
+    expect(stripScheme('kg://person/ada', 'kg')).toBe('person/ada');
+    expect(stripScheme('kg://person/ada', 'org-kb')).toBe('kg://person/ada');
+  });
+
+  it('buildEdgeId keeps the legacy kg:// output and honors a configured scheme', () => {
+    const from = buildAddress('directory/ada', { scheme: 'org-kb' });
+    const to = buildAddress('directory/team-core', { scheme: 'org-kb' });
+    expect(buildEdgeId(from, 'leads', to, { scheme: 'org-kb' })).toBe(
+      'org-kb://edge/directory/ada~leads~directory/team-core',
+    );
   });
 });
 

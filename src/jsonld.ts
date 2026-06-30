@@ -8,6 +8,7 @@
  */
 
 import type { JsonLd, KBNode } from './graph.js';
+import { buildAddress, type AddressingOptions } from './identity.js';
 
 /**
  * Build a JSON-LD envelope for a node, reusing its `identity` URN as `@id`.
@@ -16,18 +17,21 @@ import type { JsonLd, KBNode } from './graph.js';
  * The reserved LD keys (`@context` / `@id` / `@type`) are written LAST so that
  * arbitrary `data` properties can never override them — this preserves the
  * contract guarantee that `@id` reuses the identity URN and `@type` is never
- * path-derived.
+ * path-derived. `@type` is always taken from the `type` argument (an attribute),
+ * never parsed out of the address body. The optional `opts` only affects the
+ * fallback `@id` minted when a node has no `identity` (default scheme `kg`).
  */
 export function buildJsonLd(
   node: Pick<KBNode, 'id' | 'identity'>,
   type: string | string[],
   data: Record<string, unknown> = {},
   context: JsonLd['@context'] = 'https://schema.org',
+  opts: AddressingOptions = {},
 ): JsonLd {
   return {
     ...data,
     '@context': context,
-    '@id': node.identity ?? `kg://node/${node.id}`,
+    '@id': node.identity ?? buildAddress(`node/${node.id}`, opts),
     '@type': type,
   };
 }
