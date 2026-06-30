@@ -18,6 +18,12 @@ types/interfaces/fields) are minor releases; renames or removals are breaking.
   `person { login, linked }` witness. Core performs zero merging; E3 referent
   conflation consumes this substrate and can order conflicting claims by each
   claim's `source` key via the source-precedence contract.
+- **Source-precedence contract** (#26) — new `src/precedence.ts` exposing
+  `SourcePrecedenceConfig { sources[]; fields? }`, wired as optional
+  `KBConfig.precedence`. Declared system-of-record precedence (ordering only —
+  no thresholds, no confidence scores) for deterministically resolving the rare
+  conflicting-fact case on a conflated referent (E3 seam). Shares the source-key
+  string space with the identity-claims `source` field.
 
 ## [0.2.0] - 2026-06-30
 

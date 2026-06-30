@@ -5,6 +5,7 @@
  * consumer (the SPA). The shape is the contract so a config authored for one
  * consumer is understood by another.
  */
+import type { SourcePrecedenceConfig } from './precedence.js';
 
 /** Visual identity mode. */
 export type VisualMode = 'sprites' | 'heroes' | 'emoji' | 'none';
@@ -109,6 +110,13 @@ export interface KBConfig {
    * before. See {@link IdentityAddressingConfig}.
    */
   identity?: IdentityAddressingConfig;
+  /**
+   * Declared system-of-record precedence used to deterministically resolve the
+   * rare conflicting-fact case on a conflated referent (E3). Optional and
+   * additive: when unset, core/consumers apply no precedence ordering. No
+   * thresholds, no confidence scores. See {@link SourcePrecedenceConfig}.
+   */
+  precedence?: SourcePrecedenceConfig;
   clusters: Record<
     string,
     {

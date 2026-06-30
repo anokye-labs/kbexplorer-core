@@ -20,6 +20,7 @@ export * from './derivation.js';
 export * from './identity-claims.js';
 export * from './jsonld.js';
 export * from './config.js';
+export * from './precedence.js';
 export * from './identity.js';
 export * from './relations.js';
 export * from './source.js';
