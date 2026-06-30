@@ -4,6 +4,14 @@ import { mapRelation } from '../src/index.js';
 import type { Connection, KBEdge } from '../src/index.js';
 
 describe('relationRaw passthrough', () => {
+  it('unknown relations resolve to structural, never a distinct "related"', () => {
+    // locks the doc contract: `related` is a synonym for `structural`
+    expect(mapRelation('mentored').relation).toBe('structural');
+    expect(mapRelation('related').relation).toBe('structural');
+    // mapRelation().raw is ALWAYS populated, even for in-taxonomy input
+    expect(mapRelation('leads').raw).toBe('leads');
+  });
+
   it('preserves a source label outside the taxonomy alongside the mapped relation', () => {
     const { relation, raw } = mapRelation('mentored');
     // 'mentored' is not in the taxonomy → collapses to the structural fallback

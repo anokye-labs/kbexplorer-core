@@ -35,6 +35,12 @@ export type DerivationMode = 'observed' | 'derived' | (string & {});
  * `mode: 'derived'` the fact was computed by `generator` from `inputs`; a change
  * to any input (detected via its {@link SourceRef.contentHash}) means the fact
  * is stale and can be recomputed.
+ *
+ * **Canonical & authoritative.** When a node/edge carries this structured
+ * `Derivation`, it is the authoritative record of how the fact came to be. The
+ * legacy/advisory companions — the boolean `KBNode.derived` and the
+ * `NodeSource` `'derived'` variant — MUST agree with it and never contradict
+ * (e.g. a `'derived'` mode ⇒ `derived` true, with matching `generator`).
  */
 export interface Derivation {
   /** Discriminator: observed-from-source vs derived-from-inputs. */

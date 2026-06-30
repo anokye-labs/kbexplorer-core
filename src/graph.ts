@@ -117,6 +117,12 @@ export type NodeSource =
   | { type: 'file'; path: string }
   | { type: 'readme' }
   | { type: 'section'; parentSource: NodeSource }
+  /**
+   * Legacy/advisory derivation witness naming the `generator`. When the
+   * structured {@link Derivation} is also present on the node it is
+   * authoritative and this variant MUST agree with it (matching `generator`);
+   * see the canonical rule on {@link KBNode.derived}.
+   */
   | { type: 'derived'; generator: string }
   | { type: 'external'; provider: string }
   | { type: 'branch'; name: string; protected: boolean }
@@ -175,9 +181,12 @@ export interface Connection {
   relation?: string;
   /**
    * The source's **original** relation label, preserved verbatim when it does
-   * not map onto the canonical taxonomy (see {@link mapRelation}). Lets an
-   * authored connection keep its native vocabulary alongside the normalized
-   * `relation`. Additive; absent → unchanged behavior.
+   * not map onto the canonical taxonomy (unknown labels resolve to
+   * `'structural'` via {@link mapRelation}). Lets an authored connection keep
+   * its native vocabulary alongside the normalized `relation`. Set this **only**
+   * for outside-taxonomy labels — it is the passthrough slot, not a mirror of
+   * `mapRelation(raw).raw` (which is always populated). Additive; absent →
+   * unchanged behavior.
    */
   relationRaw?: string;
 }
@@ -227,12 +236,26 @@ export interface KBNode extends Provenance {
    * are pointers, not an identity rewrite. Additive; absent → unchanged.
    */
   linkedRefs?: SourceRef[];
-  /** Whether this node's content was machine-derived (can be re-generated). */
+  /**
+   * Whether this node's content was machine-derived (can be re-generated).
+   *
+   * **Canonical "derived" rule.** A node can express derivation three ways:
+   * this boolean `derived`, the structured {@link Derivation} in `derivation`,
+   * and the `source: { type: 'derived', generator }` {@link NodeSource} variant.
+   * When `derivation` is present it is **authoritative** (use its `mode` /
+   * `generator` / `inputs`); `derived` and the `NodeSource` derived variant are
+   * advisory/legacy and MUST agree with it (a `'derived'` derivation ⇒ `derived`
+   * true and any `generator`s match). They must never contradict.
+   */
   derived?: boolean;
   /**
    * How this node came to exist (observed vs derived) and, for derived nodes,
    * the inputs it was computed from — so a change to an input is detectable for
    * recompute. Richer companion to the boolean `derived` flag; additive.
+   *
+   * **Authoritative** when present: the boolean `derived` and the
+   * `NodeSource` `'derived'` variant are advisory/legacy and MUST agree with
+   * this field (see the rule on {@link KBNode.derived}).
    */
   derivation?: Derivation;
   /** Source of this node: authored markdown or GitHub artifact. */
@@ -293,10 +316,18 @@ export interface KBEdge extends Provenance {
   /**
    * The source's **original** relation label, preserved verbatim when it falls
    * outside the 6-relation taxonomy and {@link mapRelation} would otherwise drop
-   * it (the mapped `relation` collapses to a canonical value or `related`).
-   * Supports the *open relations* axis (anokye-labs/kbexplorer#12) — an edge is
-   * not forced to forget its native vocabulary. A plain string, so it
-   * round-trips through JSON-LD unchanged. Additive; absent → unchanged.
+   * it — i.e. unknown labels, which `mapRelation` maps to `'structural'` (the
+   * canonical fallback; `related` is merely a *synonym* for `'structural'`, not
+   * a distinct relation). Supports the *open relations* axis
+   * (anokye-labs/kbexplorer#12) — an edge is not forced to forget its native
+   * vocabulary. A plain string, so it round-trips through JSON-LD unchanged.
+   *
+   * Distinct from `mapRelation(raw).raw`: that helper's `raw` is **always**
+   * populated (it echoes the normalized input even for in-taxonomy labels),
+   * whereas this field is the *passthrough* slot and should be set **only** when
+   * the source label is outside the taxonomy. Do not copy `mapRelation().raw`
+   * here for an in-taxonomy relation — that would over-populate `relationRaw`.
+   * Additive; absent → unchanged.
    */
   relationRaw?: string;
   /**

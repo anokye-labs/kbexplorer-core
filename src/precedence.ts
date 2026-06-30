@@ -31,8 +31,15 @@
 export interface SourcePrecedenceConfig {
   /**
    * Ordered system-of-record keys, highest precedence first. The same open
-   * string space as {@link IdentityClaim.source} and the identity addressing
-   * `authority` / `sourceAuthorities` keys.
+   * string space as {@link IdentityClaim.source}, the node/edge
+   * {@link Provenance.sourceId}, and the identity addressing `authority` /
+   * `sourceAuthorities` keys.
+   *
+   * The bridge to precedence's stated job (ranking competing *attribute* values
+   * on a conflated referent): each contributing node/edge attributes its
+   * attribute facts to a system-of-record via its `Provenance.sourceId`. E3
+   * resolves a conflict by comparing those `sourceId`s against this order — the
+   * value from the highest-ranked `sourceId` wins, deterministically.
    */
   sources: string[];
   /**

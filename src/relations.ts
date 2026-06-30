@@ -73,6 +73,14 @@ export function isKnownRelation(value: unknown): value is KnownRelation {
  * `relation` is always a member of {@link KNOWN_RELATIONS}; `raw` preserves the
  * normalized input so callers can keep the original phrasing alongside the
  * canonical relation. Unknown labels resolve to `'structural'`.
+ *
+ * Note on the two `raw` notions: this returned `raw` is **always** populated
+ * (it echoes the normalized input even for in-taxonomy labels, defaulting to
+ * `'structural'` for empty input). It is NOT the same as the `relationRaw`
+ * passthrough field on {@link KBEdge} / {@link Connection}, which should be set
+ * **only** when the source label is *outside* the taxonomy. Callers normalizing
+ * an unknown label can copy this `raw` into `relationRaw`; for an in-taxonomy
+ * label they should leave `relationRaw` unset.
  */
 export function mapRelation(raw: unknown): { relation: KnownRelation; raw: string } {
   const key = String(raw ?? '').trim().toLowerCase();
