@@ -24,6 +24,11 @@ types/interfaces/fields) are minor releases; renames or removals are breaking.
   no thresholds, no confidence scores) for deterministically resolving the rare
   conflicting-fact case on a conflated referent (E3 seam). Shares the source-key
   string space with the identity-claims `source` field.
+- **Raw-relation passthrough** (#27) — `KBEdge` and `Connection` gain an optional
+  `relationRaw?: string` that preserves a source's original relation label
+  verbatim when it falls outside the 6-relation taxonomy (which `mapRelation`
+  would otherwise drop). Supports the open-relations axis; a plain string that
+  round-trips through JSON-LD. Additive; absent → unchanged.
 
 ## [0.2.0] - 2026-06-30
 
