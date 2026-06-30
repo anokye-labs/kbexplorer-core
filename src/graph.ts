@@ -8,6 +8,7 @@
  * concerns (edge colors, viewers, layout) live in the consumer, never here.
  */
 import type { Provenance } from './source-ref.js';
+import type { Derivation } from './derivation.js';
 
 /**
  * How a node's content should be rendered.
@@ -203,6 +204,12 @@ export interface KBNode extends Provenance {
   identity?: string;
   /** Whether this node's content was machine-derived (can be re-generated). */
   derived?: boolean;
+  /**
+   * How this node came to exist (observed vs derived) and, for derived nodes,
+   * the inputs it was computed from — so a change to an input is detectable for
+   * recompute. Richer companion to the boolean `derived` flag; additive.
+   */
+  derivation?: Derivation;
   /** Source of this node: authored markdown or GitHub artifact. */
   source: NodeSource;
   /** Which provider created this node. */
@@ -252,6 +259,12 @@ export interface KBEdge extends Provenance {
    * the structural `type`.
    */
   relation?: string;
+  /**
+   * How this edge was asserted (observed vs derived) and, for derived edges,
+   * the inputs it was computed from — so a change to an input is detectable for
+   * recompute. Additive; absent → unchanged behavior.
+   */
+  derivation?: Derivation;
 }
 
 /** A cluster (logical grouping) of nodes. */
