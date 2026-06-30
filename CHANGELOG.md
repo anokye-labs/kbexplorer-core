@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Because this package is a shared **contract**, additive changes (new exported
 types/interfaces/fields) are minor releases; renames or removals are breaking.
 
+## [Unreleased]
+
+### Added
+
+- **Identity-claims contract** (#25) — new `src/identity-claims.ts` exposing the
+  open `IdentityClaimKind` union and `IdentityClaim` interface (claims only — no
+  auto-merge). `KBNode` gains optional `identityClaims?: IdentityClaim[]` and a
+  host-neutral `linkedRefs?: SourceRef[]` that generalizes the legacy
+  `person { login, linked }` witness. Core performs zero merging; E3 referent
+  conflation consumes this substrate and can order conflicting claims by each
+  claim's `source` key via the source-precedence contract.
+
 ## [0.2.0] - 2026-06-30
 
 Wave 1 — four additive, back-compatible contract additions. No breaking changes.
