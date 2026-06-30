@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Because this package is a shared **contract**, additive changes (new exported
 types/interfaces/fields) are minor releases; renames or removals are breaking.
 
-## [Unreleased]
+## [0.3.0] - 2026-06-30
+
+Wave 2 — four additive, back-compatible contract additions plus a documentation
+coherence pass. No breaking changes.
 
 ### Added
 
@@ -29,6 +32,14 @@ types/interfaces/fields) are minor releases; renames or removals are breaking.
   verbatim when it falls outside the 6-relation taxonomy (which `mapRelation`
   would otherwise drop). Supports the open-relations axis; a plain string that
   round-trips through JSON-LD. Additive; absent → unchanged.
+- **Access-label core field** (#28) — new `src/access.ts` exposing the
+  label-only `KBAccessLabel { classification?, visibility?, labels?,
+  sourcePolicyRef? }` plus the open `AccessClassification` / `AccessVisibility`
+  unions, and an `AccessConfig { redactionBoundary?, commitRedactionStubs? }`
+  seam wired as optional `KBConfig.access`. `KBNode` and `KBEdge` gain optional
+  `access?: KBAccessLabel`. Label-only by design — zero principal evaluation in
+  core; the host enforces. Default-safe: withhold restricted/unknown and
+  `commitRedactionStubs` defaults `false` (titles leak). Additive.
 
 ### Changed
 
@@ -46,14 +57,6 @@ types/interfaces/fields) are minor releases; renames or removals are breaking.
     (not `related`, which is a synonym), and the passthrough field is
     distinguished from the always-populated `mapRelation(raw).raw` so consumers
     don't over-populate `relationRaw`.
-- **Access-label core field** (#28) — new `src/access.ts` exposing the
-  label-only `KBAccessLabel { classification?, visibility?, labels?,
-  sourcePolicyRef? }` plus the open `AccessClassification` / `AccessVisibility`
-  unions, and an `AccessConfig { redactionBoundary?, commitRedactionStubs? }`
-  seam wired as optional `KBConfig.access`. `KBNode` and `KBEdge` gain optional
-  `access?: KBAccessLabel`. Label-only by design — zero principal evaluation in
-  core; the host enforces. Default-safe: withhold restricted/unknown and
-  `commitRedactionStubs` defaults `false` (titles leak). Additive.
 
 ## [0.2.0] - 2026-06-30
 
@@ -90,5 +93,6 @@ Wave 1 — four additive, back-compatible contract additions. No breaking change
   `kg://` identity helpers + the relation taxonomy, and the Source / GraphProvider
   / GraphStore / Representation interface seams.
 
+[0.3.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.3.0
 [0.2.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.2.0
 [0.1.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.1.0
