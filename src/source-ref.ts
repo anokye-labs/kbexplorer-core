@@ -93,7 +93,18 @@ export interface Evidence {
  * traced back even as locators move.
  */
 export interface Provenance {
-  /** Durable identity of the originating source, stable across runs. */
+  /**
+   * Durable identity of the originating source, stable across runs.
+   *
+   * This value lives in the **shared source-key string space** — the same open
+   * string space named by {@link IdentityClaim.source} and ordered by
+   * {@link SourcePrecedenceConfig.sources} / `fields`. It is the field that
+   * attributes a node/edge's attribute facts to a system-of-record, so E3 can
+   * rank the competing attribute values on a conflated referent by each
+   * contributing node/edge's `sourceId` (the precedence-rankable SoR key).
+   * Keep it consistent with the keys used in identity addressing
+   * (`authority` / `sourceAuthorities`) and identity claims.
+   */
   sourceId?: string;
   /** One or more pointers back to the source resources for this fact. */
   sourceRefs?: SourceRef[];

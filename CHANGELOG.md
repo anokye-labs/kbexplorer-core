@@ -29,6 +29,23 @@ types/interfaces/fields) are minor releases; renames or removals are breaking.
   verbatim when it falls outside the 6-relation taxonomy (which `mapRelation`
   would otherwise drop). Supports the open-relations axis; a plain string that
   round-trips through JSON-LD. Additive; absent → unchanged.
+
+### Changed
+
+- **E1 coherence pass** (#45) — documentation-only clarifications across the
+  now-complete E1 surface (no type changes):
+  - `Provenance.sourceId` is documented as part of the shared **source-key
+    string space** (alongside `IdentityClaim.source` /
+    `SourcePrecedenceConfig.sources` / identity `authority`), closing the
+    precedence↔provenance bridge so E3 can rank a conflated referent's attribute
+    values by each contributing node/edge `sourceId`.
+  - Canonical **"derived" rule**: when structured `Derivation` is present it is
+    authoritative; the boolean `KBNode.derived` and the `NodeSource` `'derived'`
+    variant are advisory/legacy and must agree with it.
+  - `relationRaw` docs corrected: unknown relations resolve to `'structural'`
+    (not `related`, which is a synonym), and the passthrough field is
+    distinguished from the always-populated `mapRelation(raw).raw` so consumers
+    don't over-populate `relationRaw`.
 - **Access-label core field** (#28) — new `src/access.ts` exposing the
   label-only `KBAccessLabel { classification?, visibility?, labels?,
   sourcePolicyRef? }` plus the open `AccessClassification` / `AccessVisibility`
