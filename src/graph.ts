@@ -70,8 +70,12 @@ export interface NodeSourceFile {
   path: string;
   /** Verbatim file content — the editable source of truth. */
   raw: string;
-  /** Parser format used to validate edits before a GitHub PR handoff. */
-  format: 'yaml' | 'json';
+  /**
+   * Parser format used to validate edits before a GitHub PR handoff. `'yaml'`
+   * and `'json'` cover structured content-model files; `'markdown'` covers
+   * rich-Markdown sources (e.g. authored docs edited in place).
+   */
+  format: 'yaml' | 'json' | 'markdown';
 }
 
 /**

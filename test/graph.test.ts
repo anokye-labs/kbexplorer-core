@@ -9,6 +9,7 @@ import {
   type KBGraph,
   type KBNode,
   type NodeSource,
+  type NodeSourceFile,
 } from '../src/index.js';
 
 describe('graph contract', () => {
@@ -82,6 +83,39 @@ describe('graph contract', () => {
       { type: 'person', login: 'octocat', linked: true },
     ];
     expect(sources).toHaveLength(15);
+  });
+
+  it('accepts yaml, json and markdown as NodeSourceFile.format', () => {
+    const yamlFile: NodeSourceFile = {
+      path: 'content-model/people/ada.yaml',
+      raw: 'name: Ada',
+      format: 'yaml',
+    };
+    const jsonFile: NodeSourceFile = {
+      path: 'content-model/people/ada.json',
+      raw: '{"name":"Ada"}',
+      format: 'json',
+    };
+    const markdownFile: NodeSourceFile = {
+      path: 'docs/intro.md',
+      raw: '# Intro',
+      format: 'markdown',
+    };
+
+    const files = [yamlFile, jsonFile, markdownFile];
+    expect(files.map((f) => f.format)).toEqual(['yaml', 'json', 'markdown']);
+
+    const node: KBNode = {
+      id: 'ada',
+      title: 'Ada',
+      cluster: 'people',
+      content: '<h1>Intro</h1>',
+      rawContent: '# Intro',
+      connections: [],
+      source: { type: 'file', path: 'docs/intro.md' },
+      sourceFile: markdownFile,
+    };
+    expect(node.sourceFile?.format).toBe('markdown');
   });
 });
 
