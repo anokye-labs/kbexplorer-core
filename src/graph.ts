@@ -10,6 +10,7 @@
 import type { Provenance, SourceRef } from './source-ref.js';
 import type { Derivation } from './derivation.js';
 import type { IdentityClaim } from './identity-claims.js';
+import type { KBAccessLabel } from './access.js';
 
 /**
  * How a node's content should be rendered.
@@ -260,6 +261,12 @@ export interface KBNode extends Provenance {
    * root are never mutated. Absent → no change.
    */
   pageTheme?: PageTheme;
+  /**
+   * Label-only access descriptor (classification / visibility / labels /
+   * policy pointer). kbx labels; the host enforces — there is no principal
+   * evaluation in core. Additive; absent → unlabeled. See {@link KBAccessLabel}.
+   */
+  access?: KBAccessLabel;
 }
 
 /**
@@ -298,6 +305,12 @@ export interface KBEdge extends Provenance {
    * recompute. Additive; absent → unchanged behavior.
    */
   derivation?: Derivation;
+  /**
+   * Label-only access descriptor for this relationship. kbx labels; the host
+   * enforces — no principal evaluation in core. Additive; absent → unlabeled.
+   * See {@link KBAccessLabel}.
+   */
+  access?: KBAccessLabel;
 }
 
 /** A cluster (logical grouping) of nodes. */

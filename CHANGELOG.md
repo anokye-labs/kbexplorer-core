@@ -29,6 +29,14 @@ types/interfaces/fields) are minor releases; renames or removals are breaking.
   verbatim when it falls outside the 6-relation taxonomy (which `mapRelation`
   would otherwise drop). Supports the open-relations axis; a plain string that
   round-trips through JSON-LD. Additive; absent → unchanged.
+- **Access-label core field** (#28) — new `src/access.ts` exposing the
+  label-only `KBAccessLabel { classification?, visibility?, labels?,
+  sourcePolicyRef? }` plus the open `AccessClassification` / `AccessVisibility`
+  unions, and an `AccessConfig { redactionBoundary?, commitRedactionStubs? }`
+  seam wired as optional `KBConfig.access`. `KBNode` and `KBEdge` gain optional
+  `access?: KBAccessLabel`. Label-only by design — zero principal evaluation in
+  core; the host enforces. Default-safe: withhold restricted/unknown and
+  `commitRedactionStubs` defaults `false` (titles leak). Additive.
 
 ## [0.2.0] - 2026-06-30
 
