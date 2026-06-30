@@ -7,8 +7,9 @@
  * the SPA, the JSON-LD serializer, and the LLM-context representation. Visual
  * concerns (edge colors, viewers, layout) live in the consumer, never here.
  */
-import type { Provenance } from './source-ref.js';
+import type { Provenance, SourceRef } from './source-ref.js';
 import type { Derivation } from './derivation.js';
+import type { IdentityClaim } from './identity-claims.js';
 
 /**
  * How a node's content should be rendered.
@@ -202,6 +203,22 @@ export interface KBNode extends Provenance {
   connections: Connection[];
   /** Canonical identity URN linking representations across providers. */
   identity?: string;
+  /**
+   * Identity/equivalence **claims** this node asserts — that it *may be* (or is
+   * explicitly *not*) the same referent as another resource. Claims only: core
+   * performs **zero** merging. E3's referent conflation
+   * (anokye-labs/kbexplorer#15) reads these; see {@link IdentityClaim}.
+   * Additive; absent → unchanged behavior.
+   */
+  identityClaims?: IdentityClaim[];
+  /**
+   * Host-neutral references to other source resources this node is linked to —
+   * the general form of the legacy `person { login, linked }` witness. When a
+   * content-model descriptor matches, record the descriptor as a `linkedRef`
+   * instead of flipping a host-specific boolean. No merging is implied; these
+   * are pointers, not an identity rewrite. Additive; absent → unchanged.
+   */
+  linkedRefs?: SourceRef[];
   /** Whether this node's content was machine-derived (can be re-generated). */
   derived?: boolean;
   /**
