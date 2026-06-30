@@ -72,6 +72,30 @@ export interface ExternalProviderConfig {
   module?: string;
 }
 
+/**
+ * Identity addressing configuration. All fields are optional and additive: when
+ * the whole block is unset, identifiers use the default `kg://` scheme with no
+ * authority, exactly as before.
+ */
+export interface IdentityAddressingConfig {
+  /**
+   * Identity scheme minted into addresses (`<scheme>://…`). Defaults to `kg`.
+   * Adopters may choose their own, e.g. `kb` or `org-kb`.
+   */
+  scheme?: string;
+  /**
+   * Default authority segment (`<scheme>://<authority>/…`) naming the system of
+   * record entities belong to. Optional; omitted ⇒ no authority segment.
+   */
+  authority?: string;
+  /**
+   * Per-source authority overrides (source / system-of-record key → authority),
+   * so facts federated from different sources (directory, calendar, docs) carry
+   * distinct authorities and never collide.
+   */
+  sourceAuthorities?: Record<string, string>;
+}
+
 /** Full knowledge base configuration (from config.yaml). */
 export interface KBConfig {
   title: string;
@@ -79,6 +103,12 @@ export interface KBConfig {
   author?: string;
   date?: string;
   source: SourceConfig;
+  /**
+   * Identity addressing configuration. Optional and additive: when unset,
+   * identifiers use the default `kg://` scheme with no authority, exactly as
+   * before. See {@link IdentityAddressingConfig}.
+   */
+  identity?: IdentityAddressingConfig;
   clusters: Record<
     string,
     {
