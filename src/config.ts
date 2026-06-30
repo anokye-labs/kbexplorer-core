@@ -6,6 +6,7 @@
  * consumer is understood by another.
  */
 import type { SourcePrecedenceConfig } from './precedence.js';
+import type { AccessConfig } from './access.js';
 
 /** Visual identity mode. */
 export type VisualMode = 'sprites' | 'heroes' | 'emoji' | 'none';
@@ -117,6 +118,13 @@ export interface KBConfig {
    * thresholds, no confidence scores. See {@link SourcePrecedenceConfig}.
    */
   precedence?: SourcePrecedenceConfig;
+  /**
+   * Access / redaction-boundary configuration. Optional and additive: when
+   * unset the host applies its default-safe behavior (withhold restricted or
+   * unknown-classified resources; no redaction stubs). Core declares the seam
+   * and enforces nothing. See {@link AccessConfig}.
+   */
+  access?: AccessConfig;
   clusters: Record<
     string,
     {
