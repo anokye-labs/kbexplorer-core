@@ -25,4 +25,4 @@ export * from './graph-store.js';
 export * from './representation.js';
 
 /** Semantic version of the contract surface exported by this package. */
-export const KBEXPLORER_CORE_VERSION = '0.0.0' as const;
+export const KBEXPLORER_CORE_VERSION = '0.1.0' as const;

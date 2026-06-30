@@ -39,12 +39,29 @@ runs the package's `prepare` script on install, which builds `dist/`:
 // package.json
 {
   "dependencies": {
-    "@anokye-labs/kbexplorer-core": "github:anokye-labs/kbexplorer-core#<commit-sha>"
+    "@anokye-labs/kbexplorer-core": "github:anokye-labs/kbexplorer-core#v0.1.0"
   }
 }
 ```
 
-Pin to a commit SHA (not a moving branch) so builds are reproducible.
+Pin to a release tag (e.g. `#v0.1.0`) or a commit SHA — not a moving branch — so
+builds are reproducible.
+
+## Releases
+
+### 0.1.0
+
+First tagged release — the **Wave 0a** identity foundation. Strictly additive and
+back-compatible (defaults unchanged; `kg://` stays the default scheme, and
+`buildId` / `ID_RE` are retained as legacy helpers):
+
+- **Configurable, source-agnostic identity** — addresses of the form
+  `<scheme>://<authority>/<body>` with an **opaque** body (no embedded type). New:
+  `buildAddress` / `parseAddress` / `isAddress`, `AddressingOptions` /
+  `ParsedAddress`, and `KBConfig.identity` (`IdentityAddressingConfig`).
+- **Alias-based people** — `aliasBody` / `buildPersonAddress`, plus an optional
+  `alias?` on the `person` node source (display names are never identity).
+- **Markdown sources** — `NodeSourceFile.format` now includes `'markdown'`.
 
 ## Develop
 
