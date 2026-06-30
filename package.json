@@ -1,6 +1,6 @@
 {
   "name": "@anokye-labs/kbexplorer-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared contracts for kbexplorer: pure graph types, kg:// identity, relation taxonomy, JSON-LD helpers, and the Source / Provider / Representation interfaces.",
   "license": "MIT",
   "type": "module",
