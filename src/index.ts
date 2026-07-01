@@ -16,6 +16,7 @@
 
 export * from './graph.js';
 export * from './access.js';
+export * from './redaction.js';
 export * from './source-ref.js';
 export * from './derivation.js';
 export * from './identity-claims.js';
