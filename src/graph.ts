@@ -11,6 +11,7 @@ import type { Provenance, SourceRef } from './source-ref.js';
 import type { Derivation } from './derivation.js';
 import type { IdentityClaim } from './identity-claims.js';
 import type { KBAccessLabel } from './access.js';
+import type { Redaction } from './redaction.js';
 
 /**
  * How a node's content should be rendered.
@@ -290,6 +291,13 @@ export interface KBNode extends Provenance {
    * evaluation in core. Additive; absent → unlabeled. See {@link KBAccessLabel}.
    */
   access?: KBAccessLabel;
+  /**
+   * Redact-in-place projection annotation. Present when this node is a redacted
+   * projection produced by the host's redaction boundary; describes per-field
+   * what was retained / redacted / withheld. Additive; absent → not a redacted
+   * projection. See {@link Redaction}.
+   */
+  redaction?: Redaction;
 }
 
 /**
@@ -342,6 +350,13 @@ export interface KBEdge extends Provenance {
    * See {@link KBAccessLabel}.
    */
   access?: KBAccessLabel;
+  /**
+   * Redact-in-place projection annotation for this relationship. Present when
+   * this edge is a redacted projection; describes per-field what was retained /
+   * redacted / withheld. Additive; absent → not a redacted projection. See
+   * {@link Redaction}.
+   */
+  redaction?: Redaction;
 }
 
 /** A cluster (logical grouping) of nodes. */
