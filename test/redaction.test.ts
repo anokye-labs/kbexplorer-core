@@ -10,6 +10,7 @@ import type {
   KBNode,
   Redaction,
   RedactedField,
+  RedactionStage,
 } from '../src/index.js';
 
 const policy: ExternalRef = { kind: 'http', href: 'https://policy.example/restricted' };
@@ -18,6 +19,7 @@ describe('redaction contract (redact-in-place projection)', () => {
   it('a node carries a redact-in-place projection annotation', () => {
     const redaction: Redaction = {
       boundary: 'redact',
+      stage: 'representation',
       reason: { classification: 'restricted', labels: ['pii'] },
       fields: [
         { field: 'title', action: 'retained' },
@@ -39,6 +41,8 @@ describe('redaction contract (redact-in-place projection)', () => {
     // node keeps its normal shape — no separate redacted view type
     expect(node.title).toBe('Ada');
     expect(node.redaction?.boundary).toBe('redact');
+    const stage: RedactionStage = node.redaction!.stage!;
+    expect(stage).toBe('representation');
     const byField = Object.fromEntries(
       (node.redaction?.fields ?? []).map((f) => [f.field, f]),
     ) as Record<string, RedactedField>;
@@ -83,15 +87,20 @@ describe('access-review manifest seam (.kbx/access-review.json)', () => {
     sourcePolicyRef: policy,
   };
 
-  it('a record pairs the label, the decision, and provenance', () => {
+  it('a record pairs the label, the review decision, and provenance', () => {
     const record: AccessReviewRecord = {
       ref: 'kg://people/ada',
       label,
-      decision: 'withhold',
+      decision: 'withheld',
+      boundary: 'withhold',
+      stage: 'ingest',
       provenance: { sourceId: 'directory', sourceRefs: [{ kind: 'github', href: 'kg://src/ada' }] },
       note: 'contains PII',
     };
-    expect(record.decision).toBe('withhold');
+    // decision (what was determined) and boundary (host policy) are separate axes
+    expect(record.decision).toBe('withheld');
+    expect(record.boundary).toBe('withhold');
+    expect(record.stage).toBe('ingest');
     expect(record.label.classification).toBe('restricted');
     expect(record.provenance?.sourceId).toBe('directory');
   });
@@ -106,7 +115,7 @@ describe('access-review manifest seam (.kbx/access-review.json)', () => {
     const record: AccessReviewRecord = {
       ref: 'ada',
       label,
-      decision: 'redact',
+      decision: 'redacted',
       approval,
     };
     expect(record.approval?.status).toBe('approved');
@@ -118,8 +127,8 @@ describe('access-review manifest seam (.kbx/access-review.json)', () => {
       kind: 'kbx-access-review',
       version: 1,
       records: [
-        { ref: 'a', label, decision: 'withhold' },
-        { ref: 'b', label, decision: 'redact' },
+        { ref: 'a', label, decision: 'withheld' },
+        { ref: 'b', label, decision: 'redacted' },
       ],
     };
     expect(manifest.kind).toBe('kbx-access-review');

@@ -17,8 +17,10 @@
  *
  *  2. **Access-review** — the shape of the `.kbx/access-review.json` manifest
  *     the host emits: a deterministic list of {@link AccessReviewRecord}s, each
- *     pairing the governing {@link KBAccessLabel} with the boundary
- *     {@link RedactionBoundary decision} applied and its provenance. Approval is
+ *     pairing the governing {@link KBAccessLabel} with the review
+ *     {@link RedactionAction decision} (and optionally the host-action
+ *     {@link RedactionBoundary} and the {@link RedactionStage} where it applied)
+ *     plus its provenance. Approval is
  *     a **seam only** ({@link AccessReviewApproval}); kbx never enforces it.
  *
  * Deterministic, **NO timestamps** — like {@link Provenance} / {@link SourceRef},
@@ -38,6 +40,26 @@ import type { ExternalRef, Provenance } from './source-ref.js';
  *  • `'withheld'` — the value was removed entirely (no placeholder).
  */
 export type RedactionAction = 'retained' | 'redacted' | 'withheld';
+
+/**
+ * WHERE in the pipeline a redaction was applied. Answers "at what stage was this
+ * content withheld?" — a different axis from {@link RedactionBoundary} (which is
+ * the host-action *policy*: `label-only` / `redact` / `withhold`) and from
+ * {@link RedactionAction} (what happened to a field). OPEN union so bespoke
+ * pipelines can name their own stages.
+ *  • `'source'` — at the system of record / adapter capture.
+ *  • `'ingest'` — during ingestion into the graph.
+ *  • `'conflation'` — while merging referents (E3).
+ *  • `'representation'` — when projecting a node/edge for output.
+ *  • `'search'` — at query/serve time.
+ */
+export type RedactionStage =
+  | 'source'
+  | 'ingest'
+  | 'conflation'
+  | 'representation'
+  | 'search'
+  | (string & {});
 
 /**
  * Per-field disposition within a {@link Redaction}. Names the field and what
@@ -69,6 +91,11 @@ export interface RedactedField {
 export interface Redaction {
   /** The {@link RedactionBoundary} the host applied to produce this projection. */
   boundary: RedactionBoundary;
+  /**
+   * WHERE in the pipeline the redaction was applied. Optional; a separate axis
+   * from `boundary` (the host-action policy). See {@link RedactionStage}.
+   */
+  stage?: RedactionStage;
   /**
    * The access label that triggered redaction (the classification/labels that
    * crossed the boundary). Optional; carried for review and audit.
@@ -137,8 +164,25 @@ export interface AccessReviewRecord {
   ref: string;
   /** The label that governs this resource. See {@link KBAccessLabel}. */
   label: KBAccessLabel;
-  /** The boundary decision the host applied to this resource. */
-  decision: RedactionBoundary;
+  /**
+   * What the reviewer DETERMINED about this resource's content — the review
+   * verdict, expressed on the same axis as a field disposition
+   * ({@link RedactionAction}: `retained` / `redacted` / `withheld`). This is the
+   * *decision*, deliberately kept separate from `boundary` (the host-action
+   * policy) and `stage` (where redaction happened) so the two axes never
+   * conflate.
+   */
+  decision: RedactionAction;
+  /**
+   * The host-action policy that was (or should be) applied. Optional; a
+   * different concept from `decision`. See {@link RedactionBoundary}.
+   */
+  boundary?: RedactionBoundary;
+  /**
+   * WHERE in the pipeline the redaction was (or should be) applied. Optional.
+   * See {@link RedactionStage}.
+   */
+  stage?: RedactionStage;
   /**
    * Where the label/decision came from (source pointers / evidence). Reuses the
    * shared {@link Provenance} contract; deterministic, no timestamps.
