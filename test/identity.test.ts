@@ -54,10 +54,13 @@ describe('kg:// URN builders', () => {
     expect(TYPE_RE.test('person')).toBe(true);
   });
 
-  it('builds a deterministic edge URN, stripping schemes from endpoints', () => {
+  it('builds a deterministic edge URN embedding the FULL endpoint addresses', () => {
     const from = buildId('person', 'ada');
     const to = buildId('team', 'core');
-    expect(buildEdgeId(from, 'leads', to)).toBe('kg://edge/person/ada~leads~team/core');
+    // Endpoints are kept whole (scheme + body) — the edge scheme wraps them.
+    expect(buildEdgeId(from, 'leads', to)).toBe(
+      'kg://edge/kg://person/ada~leads~kg://team/core',
+    );
   });
 
   it('stripScheme is idempotent', () => {
@@ -156,11 +159,54 @@ describe('scheme-aware stripScheme / buildEdgeId', () => {
     expect(stripScheme('kg://person/ada', 'org-kb')).toBe('kg://person/ada');
   });
 
-  it('buildEdgeId keeps the legacy kg:// output and honors a configured scheme', () => {
+  it('buildEdgeId keeps the legacy kg:// output shape and honors a configured scheme', () => {
     const from = buildAddress('directory/ada', { scheme: 'org-kb' });
     const to = buildAddress('directory/team-core', { scheme: 'org-kb' });
+    // The endpoints are embedded whole; only the edge's own scheme is `org-kb`.
     expect(buildEdgeId(from, 'leads', to, { scheme: 'org-kb' })).toBe(
-      'org-kb://edge/directory/ada~leads~directory/team-core',
+      'org-kb://edge/org-kb://directory/ada~leads~org-kb://directory/team-core',
+    );
+  });
+});
+
+// Regression for the edge-identity CONTRACT bug (kbexplorer#12 Outcome 1):
+// buildEdgeId previously scheme-stripped BOTH endpoints, so genuinely distinct
+// federated endpoints that differed only by scheme (or authority) collapsed to
+// the SAME edge id — defeating multi-authority addressing. buildEdgeId must be
+// injective over the endpoint scheme/authority: distinct endpoints => distinct
+// edge ids. These tests fail against the old (scheme-stripping) buildEdgeId.
+describe('buildEdgeId endpoint-scheme injectivity (no scheme-collapse)', () => {
+  it('endpoints differing ONLY by scheme produce DIFFERENT edge ids', () => {
+    const kg = buildEdgeId('kg://x', 'rel', 'kg://y');
+    const https = buildEdgeId('https://x', 'rel', 'kg://y');
+    const ftp = buildEdgeId('ftp://x', 'rel', 'kg://y');
+    // Pre-fix these all collapsed to `kg://edge/x~rel~y`.
+    expect(kg).not.toBe(https);
+    expect(kg).not.toBe(ftp);
+    expect(https).not.toBe(ftp);
+    // And the full addresses survive into the id (no body-collapse).
+    expect(kg).toBe('kg://edge/kg://x~rel~kg://y');
+    expect(https).toBe('kg://edge/https://x~rel~kg://y');
+  });
+
+  it('endpoints differing ONLY by authority produce DIFFERENT edge ids', () => {
+    const dirA = buildAddress('ada', { authority: 'directory' });
+    const dirB = buildAddress('ada', { authority: 'calendar' });
+    expect(buildEdgeId(dirA, 'leads', 'kg://team/core')).not.toBe(
+      buildEdgeId(dirB, 'leads', 'kg://team/core'),
+    );
+  });
+
+  it('is idempotent: identical inputs yield a byte-identical id', () => {
+    const a = buildEdgeId('kg://person/ada', 'leads', 'kg://team/core');
+    const b = buildEdgeId('kg://person/ada', 'leads', 'kg://team/core');
+    expect(a).toBe(b);
+    expect(a).toBe('kg://edge/kg://person/ada~leads~kg://team/core');
+  });
+
+  it('swapping which endpoint carries the scheme still distinguishes the edge', () => {
+    expect(buildEdgeId('kg://x', 'rel', 'https://y')).not.toBe(
+      buildEdgeId('https://x', 'rel', 'kg://y'),
     );
   });
 });

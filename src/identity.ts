@@ -172,8 +172,14 @@ export function buildPersonAddress(alias: unknown, opts: AddressingOptions = {})
 /**
  * Build a deterministic edge address
  * `<scheme>://[<authority>/]edge/<from>~<relation>~<to>` from endpoints +
- * relation. Endpoints are scheme-stripped first. With default options the output
- * is the historical `kg://edge/...` form.
+ * relation. Endpoints are embedded in FULL (scheme + authority + body) and are
+ * NOT scheme-stripped, so endpoints that differ only by scheme or authority
+ * yield DISTINCT edge ids — a federated `https://x` endpoint never collides
+ * with `kg://x`, preserving the multi-authority addressing guarantee that facts
+ * from different sources don't merge. The enclosing `opts` scheme/authority only
+ * controls the edge address's own scheme; with default options that stays the
+ * historical `kg://edge/...` form. Pure and deterministic: identical inputs
+ * produce a byte-identical id.
  */
 export function buildEdgeId(
   fromId: unknown,
@@ -181,8 +187,8 @@ export function buildEdgeId(
   toId: unknown,
   opts: AddressingOptions = {},
 ): string {
-  const from = stripScheme(fromId);
-  const to = stripScheme(toId);
+  const from = String(fromId);
+  const to = String(toId);
   return buildAddress(`edge/${from}~${relation}~${to}`, opts);
 }
 
