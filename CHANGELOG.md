@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Because this package is a shared **contract**, additive changes (new exported
 types/interfaces/fields) are minor releases; renames or removals are breaking.
 
+## [0.5.0] - 2026-07-02
+
+Baked affordance data-path — additive `KBNode` fields so a graph node can carry
+the per-retrieval affordances and links its `Source` computed, giving surfaces
+(e.g. an affordance launchpad) real data to render instead of a synthesized
+per-type default.
+
+### Added
+
+- **`KBNode.affordances` / `KBNode.links`** (#57, PR #60) — two additive,
+  optional fields on `KBNode`, reusing the existing `Affordance` and
+  `ResourceLink` types from `src/source.ts` (no new or parallel shapes).
+  `affordances?: Affordance[]` records the operations the node's underlying
+  resource permitted at retrieval; `links?: ResourceLink[]` carries hypermedia
+  links from the same retrieval (e.g. a `{ rel: 'staging-area', href }`). They
+  are an **advisory build-time snapshot** of the per-retrieval
+  `Resource.affordances` / `Resource.links`: a consumer/host **must** re-check
+  at action-invoke time via the do-seam / consent gate — core neither performs
+  nor guarantees that check. Absent → byte-identical serialization; consumers
+  must not synthesize a per-type default from their absence. Additive,
+  back-compatible. Unblocks anokye-labs/kbexplorer-template#456 and #411.
+
 ## [0.4.0] - 2026-07-02
 
 Wave 3 — redaction/access-review contract, a `buildEdgeId` scheme/authority
@@ -144,6 +166,7 @@ Wave 1 — four additive, back-compatible contract additions. No breaking change
   / GraphStore / Representation interface seams.
 
 [Unreleased]: https://github.com/anokye-labs/kbexplorer-core/compare/v0.4.0...HEAD
+[0.5.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.5.0
 [0.4.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.4.0
 [0.3.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.3.0
 [0.2.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.2.0
