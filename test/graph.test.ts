@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  type Affordance,
   buildJsonLd,
   type Connection,
   type JsonLd,
@@ -10,6 +11,8 @@ import {
   type KBNode,
   type NodeSource,
   type NodeSourceFile,
+  type ResourceLink,
+  STAGING_AREA_REL,
 } from '../src/index.js';
 
 describe('graph contract', () => {
@@ -141,6 +144,46 @@ describe('graph contract', () => {
       sourceFile: markdownFile,
     };
     expect(node.sourceFile?.format).toBe('markdown');
+  });
+});
+
+describe('KBNode affordances / links (baked per-retrieval snapshot)', () => {
+  const base: KBNode = {
+    id: 'issue-42',
+    title: 'Fix the thing',
+    cluster: 'work',
+    content: '',
+    rawContent: '',
+    connections: [],
+    source: { type: 'issue', number: 42, state: 'open', labels: [] },
+  };
+
+  it('omits both fields for a node that carries no retrieval affordances (byte-identical serialization)', () => {
+    const serialized = JSON.parse(JSON.stringify(base)) as Record<string, unknown>;
+    expect(Object.keys(serialized)).not.toContain('affordances');
+    expect(Object.keys(serialized)).not.toContain('links');
+    expect(base.affordances).toBeUndefined();
+    expect(base.links).toBeUndefined();
+  });
+
+  it('carries an open Affordance[] snapshot and round-trips through JSON unchanged', () => {
+    const affordances: Affordance[] = ['read', 'comment', 'close'];
+    const node: KBNode = { ...base, affordances };
+    const roundTripped = JSON.parse(JSON.stringify(node)) as KBNode;
+    expect(roundTripped.affordances).toEqual(['read', 'comment', 'close']);
+    // Open union: a custom, source-native affordance beyond read/write/stage.
+    const custom: KBNode = { ...base, affordances: ['read', 'request-changes'] };
+    expect(custom.affordances).toContain('request-changes');
+  });
+
+  it('carries retrieval links (e.g. a staging-area pointer) reusing the source.ts ResourceLink shape', () => {
+    const links: ResourceLink[] = [
+      { rel: STAGING_AREA_REL, href: 'github://anokye-labs/kbexplorer/pull/7/staging' },
+    ];
+    const node: KBNode = { ...base, affordances: ['read', 'merge'], links };
+    const roundTripped = JSON.parse(JSON.stringify(node)) as KBNode;
+    expect(roundTripped.links?.[0]?.rel).toBe('staging-area');
+    expect(roundTripped.links?.[0]?.href).toContain('/staging');
   });
 });
 
