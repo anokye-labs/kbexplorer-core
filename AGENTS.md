@@ -27,7 +27,12 @@ lockstep with both consumers (`kbexplorer-cli`, `kbexplorer-template`).
 
 ## Branch Protection
 
-The default branch is protected:
+**Check, don't assume.** The rules below describe the *intended* policy, but a
+live audit (anokye-labs/kbexplorer#105) found this repo's `main` currently has
+**no branch-protection ruleset configured at all** — the auto-merge workflow's
+"GitHub enforces every rule server-side" claim only holds where a rule exists.
+Verify actual repo settings (`/rules/branches/main` via the API, or the repo's
+Settings → Rules UI) before relying on any of the following as fact:
 
 - **Pull request required** — no direct pushes to `main`.
 - **Required status checks** (strict / up-to-date) — `pr-title`, `check-linked-issue`,
@@ -44,12 +49,33 @@ Never commit directly to `main`. Never force push.
 
 1. Create an Issue (with a native Issue **Type**: Epic / Feature / Task / Bug).
 2. Create a branch and implement.
-3. Open a PR that references the issue (e.g. `Closes #12`).
-4. CI goes green → the PR auto-merges (0 approvals), which closes the issue.
+3. Open a PR that references the issue (e.g. `refs #12`) — closure is a
+   separate, post-verification step (see below), not something a PR
+   description should trigger automatically.
+4. CI goes green → merge. Close the issue explicitly once the merged change has
+   been verified, rather than relying on merge-time auto-closing.
 
 Use the **GraphQL API** for issue types, sub-issues, and blocked-by relationships
 (the REST API does not support them). Include `GraphQL-Features: sub_issues` for
 sub-issue operations.
+
+## GitHub & Work-Item Conventions
+
+These conventions are tool-agnostic and shared across the org's repos — apply
+them however you interact with GitHub (`gh` CLI, REST, GraphQL, or an MCP
+server); no tool is preferred over another. GraphQL-level capability is
+required specifically for sub-issues and blocked-by relationships, since the
+REST API cannot express them.
+
+- **`refs #N`, never `closes #N`** in commits/PRs — linking is not closing.
+- **Verify before closing.** An issue closes only after its fix has been
+  independently verified (tests pass, behavior checked) — never as an
+  automatic side effect of a merge or a commit keyword.
+- **Conventional Commits** (`type(scope): description`) for every commit.
+- For **work-breakdown-structure mechanics** (typed Epic → Feature → Task
+  hierarchies, sub-issues, blocked-by edges via GraphQL), see
+  `kbexplorer-template`'s `.agents/skills/wbs-builder/` skill rather than
+  reinventing the scaffolding here.
 
 ## Verification
 

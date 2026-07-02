@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Because this package is a shared **contract**, additive changes (new exported
 types/interfaces/fields) are minor releases; renames or removals are breaking.
 
+## [Unreleased] — v0.4.0 draft
+
+### Added
+
+- **Redaction + access-review contract** (#29, PR #48) — new `src/redaction.ts`
+  exposing `Redaction` / `RedactedField` / `RedactionAction` (a redact-in-place
+  projection annotation, optionally carried on `KBNode.redaction` /
+  `KBEdge.redaction`) and the `.kbx/access-review.json` manifest shape
+  (`AccessReviewManifest` / `AccessReviewRecord` / `AccessReviewApproval`).
+  Label-only and enforcement-free, like the access-label contract (#28) it sits
+  on top of: core describes what a redaction boundary did, the host enforces
+  it. Deterministic, no timestamps. Additive; back-compatible.
+
+  This PR merged to `main` after the `v0.3.0` tag and has not shipped under any
+  released version yet — it is the reason this Unreleased section exists.
+
+### Fixed
+
+- **`buildEdgeId` no longer collapses distinct endpoint schemes/authorities**
+  (kbexplorer#12 Outcome 1). It previously `stripScheme`-stripped both
+  endpoints before composing the edge id, so endpoints that differed only by
+  scheme or authority (`https://x`, `ftp://x`, `kg://x`) reduced to the same
+  body and produced **identical** edge ids — silently merging facts from
+  different federated sources. Endpoints are now embedded in full (scheme +
+  authority + body), making `buildEdgeId` injective over the endpoint
+  scheme/authority. `stripScheme` itself is unchanged and remains available for
+  display use.
+
+  **Output change (consumers must regenerate committed edge/derive goldens):**
+  the same-scheme edge id shape changes from
+  `kg://edge/<from-body>~<rel>~<to-body>` to
+  `kg://edge/<from-full>~<rel>~<to-full>`, e.g.
+  `buildEdgeId('kg://person/ada', 'leads', 'kg://team/core')` now yields
+  `kg://edge/kg://person/ada~leads~kg://team/core` (was
+  `kg://edge/person/ada~leads~team/core`).
+
+### Tests
+
+- `buildEdgeId` endpoint-scheme/authority injectivity regression suite:
+  endpoints differing only by scheme (`kg://x` vs `https://x` vs `ftp://x`) or
+  only by authority now assert **distinct** edge ids, plus idempotency
+  (identical inputs → byte-identical id). Replaces the earlier assertions that
+  blessed scheme-collapse.
+- Regression tests pinning PR #31's disclosed-but-previously-untested behavior
+  change (#52): `stripScheme`'s default-mode widening to strip any
+  well-formed scheme (not just `kg://`), and `buildJsonLd`'s fallback `@id`
+  construction honoring a configured scheme/authority via `buildAddress`.
+  Test-only; no behavior change.
+
 ## [0.3.0] - 2026-06-30
 
 Wave 2 — four additive, back-compatible contract additions plus a documentation
@@ -93,6 +142,7 @@ Wave 1 — four additive, back-compatible contract additions. No breaking change
   `kg://` identity helpers + the relation taxonomy, and the Source / GraphProvider
   / GraphStore / Representation interface seams.
 
+[Unreleased]: https://github.com/anokye-labs/kbexplorer-core/compare/v0.3.0...HEAD
 [0.3.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.3.0
 [0.2.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.2.0
 [0.1.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.1.0
