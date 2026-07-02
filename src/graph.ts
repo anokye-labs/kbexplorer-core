@@ -12,6 +12,7 @@ import type { Derivation } from './derivation.js';
 import type { IdentityClaim } from './identity-claims.js';
 import type { KBAccessLabel } from './access.js';
 import type { Redaction } from './redaction.js';
+import type { Affordance, ResourceLink } from './source.js';
 
 /**
  * How a node's content should be rendered.
@@ -298,6 +299,27 @@ export interface KBNode extends Provenance {
    * projection. See {@link Redaction}.
    */
   redaction?: Redaction;
+  /**
+   * Operations permitted on this node's underlying resource, captured as a
+   * **snapshot** from the retrieval that produced the node (build/load time).
+   *
+   * `Affordance`s are **per-retrieval / situational** (see {@link Affordance}
+   * and `Source.retrieve`): the same resource can afford different operations on
+   * a later retrieval as auth, locks, or branch-protection change. Baking them
+   * onto a node is therefore an **advisory** hint for UI (e.g. an affordance
+   * launchpad). Consumers/hosts MUST re-check at action-invoke time via the
+   * do-seam / consent gate; core neither performs nor guarantees that check.
+   * Additive; absent → the load path did not carry affordances for this node
+   * (render nothing, do not synthesize a per-type default).
+   */
+  affordances?: Affordance[];
+  /**
+   * Hypermedia links carried from this node's retrieval — e.g. a
+   * `{ rel: 'staging-area', href }` pointing at a staged resource's retrievable
+   * area (see {@link ResourceLink} / `STAGING_AREA_REL`). Same build-time
+   * snapshot semantics as {@link affordances}. Additive; absent → unchanged.
+   */
+  links?: ResourceLink[];
 }
 
 /**
