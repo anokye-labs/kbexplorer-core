@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Because this package is a shared **contract**, additive changes (new exported
 types/interfaces/fields) are minor releases; renames or removals are breaking.
 
-## [Unreleased] — v0.4.0 draft
+## [0.4.0] - 2026-07-02
+
+Wave 3 — redaction/access-review contract, a `buildEdgeId` scheme/authority
+injectivity fix, and regression test coverage. First release published to npm
+(prior releases were git-tag-only).
 
 ### Added
 
@@ -19,9 +23,6 @@ types/interfaces/fields) are minor releases; renames or removals are breaking.
   Label-only and enforcement-free, like the access-label contract (#28) it sits
   on top of: core describes what a redaction boundary did, the host enforces
   it. Deterministic, no timestamps. Additive; back-compatible.
-
-  This PR merged to `main` after the `v0.3.0` tag and has not shipped under any
-  released version yet — it is the reason this Unreleased section exists.
 
 ### Fixed
 
@@ -142,7 +143,8 @@ Wave 1 — four additive, back-compatible contract additions. No breaking change
   `kg://` identity helpers + the relation taxonomy, and the Source / GraphProvider
   / GraphStore / Representation interface seams.
 
-[Unreleased]: https://github.com/anokye-labs/kbexplorer-core/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/anokye-labs/kbexplorer-core/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.4.0
 [0.3.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.3.0
 [0.2.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.2.0
 [0.1.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.1.0
