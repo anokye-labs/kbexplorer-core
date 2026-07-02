@@ -162,6 +162,36 @@ describe('buildJsonLd', () => {
     expect(ld['@id']).toBe('kg://node/about');
     expect(ld['@type']).toEqual(['Thing', 'CreativeWork']);
   });
+
+  // Regression pins for PR #31's disclosed-but-untested behavior change
+  // (issue #52): the fallback `@id` is now built with `buildAddress`, which
+  // takes an `opts` (scheme/authority) argument. These pin CURRENT,
+  // post-#31 fallback behavior exactly.
+  it('fallback @id honors a configured scheme (5th `opts` argument)', () => {
+    const ld = buildJsonLd({ id: 'about' }, 'Thing', {}, undefined, { scheme: 'org-kb' });
+    expect(ld['@id']).toBe('org-kb://node/about');
+  });
+
+  it('fallback @id honors a configured scheme + authority', () => {
+    const ld = buildJsonLd({ id: 'about' }, 'Thing', {}, undefined, {
+      scheme: 'org-kb',
+      authority: 'directory',
+    });
+    expect(ld['@id']).toBe('org-kb://directory/node/about');
+  });
+
+  it('opts are ignored once the node already carries an identity', () => {
+    const ld = buildJsonLd({ id: 'about', identity: 'kg://custom/about' }, 'Thing', {}, undefined, {
+      scheme: 'org-kb',
+      authority: 'directory',
+    });
+    expect(ld['@id']).toBe('kg://custom/about');
+  });
+
+  it('a malformed configured scheme falls back to the default kg:// fallback', () => {
+    const ld = buildJsonLd({ id: 'about' }, 'Thing', {}, undefined, { scheme: 'NOPE!' });
+    expect(ld['@id']).toBe('kg://node/about');
+  });
 });
 
 describe('config contract', () => {

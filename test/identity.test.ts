@@ -165,6 +165,44 @@ describe('scheme-aware stripScheme / buildEdgeId', () => {
   });
 });
 
+// Regression pins for the behavior PR #31 disclosed but never covered with a
+// test (issue #52): stripScheme's default-mode widening from "strip kg://
+// only" to "strip any well-formed scheme", and buildJsonLd's fallback @id
+// (below, in graph.test.ts). These pin CURRENT, post-#31 behavior exactly —
+// they exist so a future change to this surface is a conscious, visible diff.
+describe('stripScheme default-mode widening (regression pins, issue #52)', () => {
+  it('strips a non-kg well-formed scheme too — the disclosed widening', () => {
+    // Pre-#31, stripScheme only recognized a hardcoded `kg://` prefix, so this
+    // input would have been returned unchanged. Post-#31 it is stripped like
+    // any other well-formed scheme.
+    expect(stripScheme('https://example.com/path')).toBe('example.com/path');
+    expect(stripScheme('mailto://someone')).toBe('someone');
+  });
+
+  it('leaves scheme-less input untouched', () => {
+    expect(stripScheme('person/ada')).toBe('person/ada');
+    expect(stripScheme('ada')).toBe('ada');
+    expect(stripScheme('')).toBe('');
+  });
+
+  it('strips unusual-but-well-formed schemes (digits, +, ., - after the leading letter)', () => {
+    expect(stripScheme('a1+2.3-4://body')).toBe('body');
+    expect(stripScheme('custom-scheme.v2://x/y')).toBe('x/y');
+  });
+
+  it('does NOT strip a prefix that is not a well-formed scheme', () => {
+    // Uppercase: the default-mode regex is lowercase-only (mirrors SCHEME_RE).
+    expect(stripScheme('HTTP://example.com')).toBe('HTTP://example.com');
+    // Digit-led: a well-formed scheme must be letter-led.
+    expect(stripScheme('1abc://example.com')).toBe('1abc://example.com');
+  });
+
+  it('is idempotent once a scheme has already been stripped', () => {
+    const stripped = stripScheme('https://example.com/path');
+    expect(stripScheme(stripped)).toBe(stripped);
+  });
+});
+
 describe('relation taxonomy', () => {
   it('exposes exactly the six canonical relations', () => {
     expect([...KNOWN_RELATIONS]).toEqual([
