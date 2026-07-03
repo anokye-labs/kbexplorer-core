@@ -23,9 +23,29 @@ and interfaces, no runtime engine, no I/O.
   `ID_RE`) are retained for back-compat.
 - **Relation taxonomy** — the canonical edge-relation vocabulary.
 - **JSON-LD helpers** — deterministic serialization of the pure graph.
-- **Seams** — the `Source`, `GraphProvider`, `GraphStore`, and `Representation`
-  interfaces that make providers, optional content-addressed caches, and render
-  targets pluggable.
+- **Seams** — the `Source`, `GraphProvider`, `ProviderRegistry`, `GraphStore`,
+  and `Representation` interfaces that make providers, optional content-addressed
+  caches, and render targets pluggable.
+
+## Architecture layers
+
+This repository is the contracts layer of the kbexplorer stack. The responsibilities
+are intentionally split so new code lands in the right place:
+
+- **`kbexplorer-core`** — pure data types and interface seams only (`KBNode`,
+  `KBGraph`, `KBConfig`, `Source`, `GraphProvider`, `ProviderRegistry`,
+  `GraphStore`, `Representation`). No runtime, no I/O, no rendering, no browser
+  coupling.
+- **`kbexplorer-engine`** (new) — Node-safe implementation for provider
+  orchestration, parsing, identity minting, transforms, content-model building,
+  and sqlite-backed `GraphStore` implementations. It depends on `core` and must be
+  able to run under plain Node for offline/non-web graph management.
+- **Consumers** (`kbexplorer-template`, `kbexplorer-cli`) — platform-specific
+  adapters on top of `engine` (browser rendering + React viewers for the
+  template; CLI I/O, git/gh access, and LLM extraction for the CLI).
+
+New logic belongs in the layer that owns the behavior. If a change is purely a
+contract or seam, it belongs here in `kbexplorer-core`.
 
 > Phase 1 stands up the package; the contracts above are filled in by the
 > follow-up tasks tracked in this repo.

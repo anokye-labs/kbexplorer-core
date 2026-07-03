@@ -6,6 +6,26 @@ system: pure types and interface seams consumed by `kbexplorer-cli` and
 runtime engine, no I/O, no rendering. If a change would add a runtime dependency
 or a side effect, it probably belongs in a consumer, not here.
 
+## Architecture layers
+
+The kbexplorer stack is intentionally split into three layers so new code lands in
+the right place:
+
+- **`kbexplorer-core`** — pure data types and interface seams only (`KBNode`,
+  `KBGraph`, `KBConfig`, `Source`, `GraphProvider`, `ProviderRegistry`,
+  `GraphStore`, `Representation`). No runtime, no I/O, no rendering, no browser
+  coupling.
+- **`kbexplorer-engine`** (new) — Node-safe implementation for provider
+  orchestration, parsing, identity minting, transforms, content-model building,
+  and sqlite-backed `GraphStore` implementations. It depends on `core` and must be
+  able to run under plain Node for offline/non-web graph management.
+- **Consumers** (`kbexplorer-template`, `kbexplorer-cli`) — platform-specific
+  adapters on top of `engine` (browser rendering + React viewers for the
+  template; CLI I/O, git/gh access, and LLM extraction for the CLI).
+
+New logic belongs in the layer that owns the behavior. If a change is purely a
+contract or seam, it belongs here in `kbexplorer-core`.
+
 ## Stack
 
 TypeScript, built with `tsup` (ESM + CJS + `.d.ts`), tested with `vitest`.

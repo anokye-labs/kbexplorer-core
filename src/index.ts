@@ -31,5 +31,7 @@ export * from './graph-store.js';
 export * from './representation.js';
 export * from './presentation.js';
 
+declare const __PKG_VERSION__: string;
+
 /** Semantic version of the contract surface exported by this package. */
-export const KBEXPLORER_CORE_VERSION = '0.4.0' as const;
+export const KBEXPLORER_CORE_VERSION = __PKG_VERSION__;
