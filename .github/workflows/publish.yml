@@ -32,6 +32,11 @@ jobs:
 
       - run: npm ci
 
+      # Node 22's bundled npm (10.x) is below the 11.5.1 minimum required for
+      # OIDC trusted publishing (npmjs.com). Upgrade npm here (publish job
+      # only — test doesn't need it) so OIDC auth can work at all.
+      - run: npm install -g npm@latest
+
       # OIDC trusted publishing (npmjs.com) is the auth path for this workflow;
       # npm tries OIDC first and only falls back to _authToken if that fails,
       # so this doesn't affect the OIDC path either way. NODE_AUTH_TOKEN is set
