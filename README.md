@@ -91,3 +91,10 @@ npm run typecheck
 npm run build      # tsup -> dist/ (esm + cjs + d.ts)
 npm test           # vitest
 ```
+
+
+## Engines policy
+
+- **Libraries** (this package, @anokye-labs/kbexplorer-provider-rich-markdown, and future @anokye-labs/kbexplorer-engine) declare ngines.node: ">=20". Libraries set the floor for their consumers, so they must not require a *higher* Node version than any app that depends on them.
+- **Apps/CLIs** (kbexplorer-cli, kbexplorer-search, kbexplorer-template) may declare a higher floor (e.g. ">=22") but must never require a *lower* floor than any library they depend on.
+- Rationale: an inverted policy (library requiring a newer Node than its consumer) silently breaks consumers on older-but-still-supported runtimes. Keep the library floor at or below every consumer's floor.
