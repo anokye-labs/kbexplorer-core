@@ -55,11 +55,168 @@ export interface KBAccessLabel {
   /** Open, host-defined access labels/tags (e.g. `'pii'`, `'legal-hold'`). */
   labels?: string[];
   /**
-   * Pointer to the source policy that governs this label (a host-neutral
-   * {@link ExternalRef}), so the host can resolve enforcement rules. Core never
-   * dereferences it.
-   */
+  * Pointer to the source policy that governs this label (a host-neutral
+  * {@link ExternalRef}), so the host can resolve enforcement rules. Core never
+  * dereferences it.
+  */
   sourcePolicyRef?: ExternalRef;
+}
+
+/** Alias for the canonical access-label type used by core consumers. */
+export type AccessLabel = KBAccessLabel;
+
+/** How access-restricted units are treated by the host. */
+export type AccessExclusionMode = 'exclude' | 'include';
+
+/** Configuration for access-label-driven exclusion. */
+export interface AccessExclusionConfig {
+  /** Index-build treatment of restricted units. */
+  mode: AccessExclusionMode;
+  /** Classifications excluded by the default-safe policy. */
+  excludedClassifications: AccessClassification[];
+  /** Visibilities excluded by the default-safe policy. */
+  excludedVisibilities: AccessVisibility[];
+}
+
+/** The default-safe exclusion policy shared by core consumers. */
+export const DEFAULT_ACCESS_EXCLUSION: AccessExclusionConfig = {
+  mode: 'exclude',
+  excludedClassifications: ['confidential', 'restricted', 'unknown'],
+  excludedVisibilities: ['private'],
+};
+
+/** Resolve a partial exclusion config into a complete one with safe defaults. */
+export function resolveAccessExclusion(
+  config?: Partial<AccessExclusionConfig>,
+): AccessExclusionConfig {
+  return {
+   mode: config?.mode ?? DEFAULT_ACCESS_EXCLUSION.mode,
+   excludedClassifications: config?.excludedClassifications
+     ? [...config.excludedClassifications]
+     : [...DEFAULT_ACCESS_EXCLUSION.excludedClassifications],
+   excludedVisibilities: config?.excludedVisibilities
+     ? [...config.excludedVisibilities]
+     : [...DEFAULT_ACCESS_EXCLUSION.excludedVisibilities],
+  };
+}
+
+const CLASSIFICATION_LATTICE: Record<string, number> = {
+  public: 1,
+  internal: 2,
+  confidential: 3,
+  restricted: 4,
+  unknown: 5,
+};
+
+const VISIBILITY_LATTICE: Record<string, number> = {
+  public: 1,
+  internal: 2,
+  private: 3,
+};
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function trimmedString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function normalizeToken(token: string | undefined): string | undefined {
+  return token?.trim().toLowerCase();
+}
+
+function isTokenExcluded(
+  token: string | undefined,
+  lattice: Record<string, number>,
+  excluded: readonly string[],
+): boolean {
+  const normalizedToken = normalizeToken(token);
+  if (normalizedToken == null) return false;
+  if (!(normalizedToken in lattice)) return true;
+  return excluded.some((candidate) => normalizeToken(candidate) === normalizedToken);
+}
+
+/**
+ * Normalize a raw access block into a canonical {@link KBAccessLabel}.
+ *
+ * A plain object with no usable fields normalizes to `undefined` (the unlabeled
+ * signal). Empty strings, whitespace, and garbage are dropped. Labels are
+ * trimmed, deduped, and sorted; `sourcePolicyRef` is preserved when it is a
+ * non-empty plain object.
+ */
+export function normalizeAccessLabel(raw: unknown): AccessLabel | undefined {
+  if (!isPlainObject(raw)) return undefined;
+  const out: Record<string, unknown> = {};
+
+  const classification = trimmedString(raw.classification);
+  if (classification) out.classification = classification;
+
+  const visibility = trimmedString(raw.visibility);
+  if (visibility) out.visibility = visibility;
+
+  if (Array.isArray(raw.labels)) {
+   const labels = [
+     ...new Set(
+       raw.labels
+         .map((value) => trimmedString(value))
+         .filter((value): value is string => value !== undefined),
+     ),
+   ].sort();
+   if (labels.length > 0) out.labels = labels;
+  }
+
+  if (isPlainObject(raw.sourcePolicyRef) && Object.keys(raw.sourcePolicyRef).length > 0) {
+   out.sourcePolicyRef = raw.sourcePolicyRef;
+  }
+
+  return Object.keys(out).length > 0 ? (out as AccessLabel) : undefined;
+}
+
+/**
+ * Coerce a scalar or object access value into a canonical label.
+ *
+ * Bare strings are interpreted as a classification shorthand,
+ * matching the CLI's frontmatter behavior.
+ */
+export function coerceAccessLabel(raw: unknown): AccessLabel | undefined {
+  const scalar = trimmedString(raw);
+  if (scalar) return normalizeAccessLabel({ classification: scalar });
+  return normalizeAccessLabel(raw);
+}
+
+/**
+ * Decide whether a label is excluded by the default-safe policy.
+ *
+ * The default policy withholds any recognized-built-in tier listed in the config
+ * and any bespoke token that cannot be ranked against the built-in lattice.
+ */
+export function isExcludedByDefault(
+  label: AccessLabel | undefined,
+  config?: Partial<AccessExclusionConfig>,
+): boolean {
+  return isExcludedByAccess(label, resolveAccessExclusion(config));
+}
+
+/** Decide whether a label is excluded under a concrete exclusion config. */
+export function isExcludedByAccess(
+  label: AccessLabel | undefined,
+  config: AccessExclusionConfig,
+): boolean {
+  if (!label) return false;
+  if (
+   label.classification &&
+   isTokenExcluded(label.classification, CLASSIFICATION_LATTICE, config.excludedClassifications)
+  ) {
+   return true;
+  }
+  if (
+   label.visibility &&
+   isTokenExcluded(label.visibility, VISIBILITY_LATTICE, config.excludedVisibilities)
+  ) {
+   return true;
+  }
+  return false;
 }
 
 /**
@@ -78,15 +235,15 @@ export type RedactionBoundary = 'label-only' | 'redact' | 'withhold';
  */
 export interface AccessConfig {
   /**
-   * How restricted/unknown resources are handled. **Default-safe**: when unset,
-   * treat as `'withhold'` so restricted and unknown-classified resources are
-   * omitted rather than leaked.
-   */
+  * How restricted/unknown resources are handled. **Default-safe**: when unset,
+  * treat as `'withhold'` so restricted and unknown-classified resources are
+  * omitted rather than leaked.
+  */
   redactionBoundary?: RedactionBoundary;
   /**
-   * Whether redaction *stubs* (placeholder nodes/edges marking that something
-   * was withheld) may be committed to output. Defaults to **`false`** because
-   * even a stub's title can leak the existence/name of a restricted resource.
-   */
+  * Whether redaction *stubs* (placeholder nodes/edges marking that something
+  * was withheld) may be committed to output. Defaults to **`false`** because
+  * even a stub's title can leak the existence/name of a restricted resource.
+  */
   commitRedactionStubs?: boolean;
 }
