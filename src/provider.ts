@@ -5,7 +5,8 @@
  * Providers are pluggable: first-party, local ES modules, or third-party
  * packages. A provider declares the affordances it needs from its source(s); the
  * engine resolves providers in dependency order and fails fast if a required
- * affordance is unmet. This module is pure contract — no registry, no engine.
+ * affordance is unmet. This module is pure contract — no engine, just the
+ * provider and registry seams.
  */
 import type { ExternalProviderConfig, KBConfig } from './config.js';
 import type { KBEdge, KBNode } from './graph.js';
@@ -42,6 +43,19 @@ export interface GraphProvider {
   requiredAffordances?: Affordance[];
   /** Resolve this provider's graph fragment. */
   resolve(context: ProviderContext): Promise<ProviderResult>;
+}
+
+/**
+ * Pure seam for ordered provider execution.
+ *
+ * Host implementations may provide this via a class, object, or other runtime
+ * wrapper; the contract is intentionally type-only so the core package remains
+ * free of implementation details.
+ */
+export interface ProviderRegistry {
+  register(provider: GraphProvider): void;
+  getExecutionOrder(): GraphProvider[];
+  get(id: string): GraphProvider | undefined;
 }
 
 /**
