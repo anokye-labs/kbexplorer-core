@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Because this package is a shared **contract**, additive changes (new exported
 types/interfaces/fields) are minor releases; renames or removals are breaking.
 
+## [0.6.0] - 2026-07-11
+
+Render-contribution contract (A1 of anokye-labs/kbexplorer#130) — additive,
+framework-free seams so a loadable provider can declare its render half and nodes
+can carry multiple named views. Core still never imports React/DOM: it sees only
+specifiers and pure data. Provider-contract API bumped **1.0.0 → 1.1.0**.
+
+### Added
+
+- **`ProviderModule.views?: string`** (#76) — a package-relative *specifier*
+  (e.g. `'./views'`) for the module carrying the provider's render half
+  (viewers + block renderers). JSDoc pins the **module-graph-isolation rule**:
+  importing the provider's `.` (data) entry MUST NOT evaluate the render module
+  graph, so data-only hosts (the CLI's Node-side composite ingest, the render-free
+  engine) load the data half untouched. The imported module's shape
+  (`ProviderViews { viewers?, blockRenderers? }`) is defined by
+  `@anokye-labs/kbexplorer-view-kit` (template#503), deliberately NOT in core.
+  The presence of `views` is the optional render *offer* — it is not a capability
+  requirement (see below).
+- **`ProviderCapability` gains `'viewers'` and `'block-renderers'`** (#76) — two
+  documented members of the open capability union. A lens-only provider that is
+  useless without rendering lists these in `capabilities` (and is skipped on
+  incapable hosts by the unchanged `checkProviderCompatibility`); a provider that
+  can also run data-only MUST NOT list them — shipping `views` is the offer.
+- **`NodeLens` + `KBNode.lenses?` / `KBNode.defaultLens?`** (#76) — `NodeLens
+  { id; label?; viewer }` where `viewer` is an open viewer-registry key. A node
+  may offer multiple named lenses over the same content/data and name a default;
+  core ships no viewer and no selection logic. Additive; absent → unchanged.
+- **`CalendarModel` view-model** (#76) — new `src/view-models.ts` exposing the
+  first Tier 0 (stack-free, pure-data) model lens: `CalendarModel { events }` /
+  `CalendarEvent { start; end?; allDay?; summary?; location?; category? }`. A
+  provider can parse at resolve time, store the model on `node.data`, and declare
+  `viewer: 'calendar-month'` with **zero render code shipped**. A data type like
+  `KBGraph`.
+
+### Changed
+
+- **`PROVIDER_API_VERSION`: `'1.0.0'` → `'1.1.0'`** (#76) — additive minor. All
+  new fields are optional; existing data-only modules typecheck and load
+  unmodified. No change to `checkProviderCompatibility` semantics: `capabilities`
+  still means what the module *requires*.
+
 ## [0.5.0] - 2026-07-02
 
 Baked affordance data-path — additive `KBNode` fields so a graph node can carry
@@ -165,7 +207,8 @@ Wave 1 — four additive, back-compatible contract additions. No breaking change
   `kg://` identity helpers + the relation taxonomy, and the Source / GraphProvider
   / GraphStore / Representation interface seams.
 
-[Unreleased]: https://github.com/anokye-labs/kbexplorer-core/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/anokye-labs/kbexplorer-core/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.6.0
 [0.5.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.5.0
 [0.4.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.4.0
 [0.3.0]: https://github.com/anokye-labs/kbexplorer-core/releases/tag/v0.3.0

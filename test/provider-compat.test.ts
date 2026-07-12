@@ -4,6 +4,7 @@ import {
   PROVIDER_API_VERSION,
   checkProviderCompatibility,
   type ProviderHostContract,
+  type ProviderModule,
 } from '../src/index.js';
 
 const host: ProviderHostContract = {
@@ -78,5 +79,67 @@ describe('checkProviderCompatibility', () => {
       compatible: false,
       reason: expect.stringContaining(PROVIDER_API_VERSION),
     });
+  });
+});
+
+describe('render-contribution degradation (views offer vs viewers requirement)', () => {
+  // A host that cannot render at all: advertises only data capabilities.
+  const dataOnlyHost: ProviderHostContract = {
+    apiVersion: PROVIDER_API_VERSION,
+    capabilities: ['graph:nodes', 'graph:edges'],
+  };
+  // A render-capable host: additionally advertises 'viewers'/'block-renderers'.
+  const renderingHost: ProviderHostContract = {
+    apiVersion: PROVIDER_API_VERSION,
+    capabilities: ['graph:nodes', 'graph:edges', 'viewers', 'block-renderers'],
+  };
+
+  it("rejects a 'viewers'-requiring (lens-only) module on the default data-only host", () => {
+    const lensOnly: Pick<ProviderModule, 'apiVersion' | 'capabilities'> = {
+      apiVersion: PROVIDER_API_VERSION,
+      capabilities: ['viewers'],
+    };
+    const result = checkProviderCompatibility(lensOnly, dataOnlyHost);
+    expect(result.compatible).toBe(false);
+    expect(result.reason).toContain('viewers');
+  });
+
+  it("accepts the same 'viewers'-requiring module on a host advertising 'viewers'", () => {
+    const lensOnly: Pick<ProviderModule, 'apiVersion' | 'capabilities'> = {
+      apiVersion: PROVIDER_API_VERSION,
+      capabilities: ['viewers'],
+    };
+    expect(checkProviderCompatibility(lensOnly, renderingHost)).toEqual({
+      compatible: true,
+    });
+  });
+
+  it("passes a module that declares `views` but requires no 'viewers' against BOTH hosts", () => {
+    // The `views` declaration is the optional render *offer*, not a requirement:
+    // it lives outside `capabilities`, so it never enters the compat check. A
+    // data-only host loads the data half and skips the render half; a rendering
+    // host resolves the views entry. Both must find the module compatible.
+    const dataOrRender: ProviderModule = {
+      default: (config) => ({
+        id: `p-${config.name ?? 'default'}`,
+        name: 'Dual-mode provider',
+        async resolve() {
+          return { nodes: [], edges: [] };
+        },
+      }),
+      apiVersion: PROVIDER_API_VERSION,
+      capabilities: ['graph:nodes'],
+      views: './views',
+    };
+
+    expect(checkProviderCompatibility(dataOrRender, dataOnlyHost)).toEqual({
+      compatible: true,
+    });
+    expect(checkProviderCompatibility(dataOrRender, renderingHost)).toEqual({
+      compatible: true,
+    });
+    // `views` is a bare specifier (never a component/value) — core only sees it.
+    expect(dataOrRender.views).toBe('./views');
+    expect(dataOrRender.capabilities).not.toContain('viewers');
   });
 });

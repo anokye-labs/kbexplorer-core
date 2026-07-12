@@ -15,6 +15,31 @@ import type { Redaction } from './redaction.js';
 import type { Affordance, ResourceLink } from './source.js';
 
 /**
+ * A named, user-selectable **lens** on a single node — one of several ways to
+ * view the same node's content/data.
+ *
+ * A node may offer multiple lenses (e.g. a raw source view, a rendered preview,
+ * and a `'calendar-month'` model view of the same underlying data). Each lens
+ * names a `viewer` — an open string key the host resolves against its viewer
+ * registry (the same key space a provider's render half registers under and that
+ * {@link ProviderCapability} `'viewers'` covers). Core ships no viewer and no
+ * selection logic: this is pure data describing the *offer*; the consumer
+ * resolves and mounts the viewer.
+ */
+export interface NodeLens {
+  /** Stable, node-unique lens identifier (used as the selection key). */
+  id: string;
+  /** Human-readable label for a lens picker; falls back to `id` when absent. */
+  label?: string;
+  /**
+   * Open viewer-registry key the host resolves to render this lens (e.g.
+   * `'calendar-month'`, `'code'`). Never a component — a specifier, like
+   * {@link DisplayMode}.
+   */
+  viewer: string;
+}
+
+/**
  * How a node's content should be rendered.
  *
  * This is an **open** union: the listed values keep editor autocomplete, while
@@ -219,6 +244,21 @@ export interface KBNode extends Provenance {
   nodeType?: 'parent' | 'section';
   /** How this node's content should be rendered. */
   display?: DisplayMode;
+  /**
+   * Named lenses this node offers — multiple ways to view the same node's
+   * content/data (e.g. a raw view alongside a `'calendar-month'` model view).
+   * Each entry names an open `viewer` registry key the host resolves; core
+   * ships no viewer and performs no selection. Additive; absent → the node
+   * offers no extra lenses (render via `display` as before). See
+   * {@link NodeLens}.
+   */
+  lenses?: NodeLens[];
+  /**
+   * The `id` of the {@link lenses} entry to select by default. When absent (or
+   * naming no listed lens) the consumer falls back to its normal `display`
+   * routing. Additive; absent → unchanged behavior.
+   */
+  defaultLens?: string;
   connections: Connection[];
   /** Canonical identity URN linking representations across providers. */
   identity?: string;

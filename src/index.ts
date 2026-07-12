@@ -8,6 +8,7 @@
  *
  * What lives here:
  *   - graph types (KBNode / KBEdge / KBGraph / Cluster / Connection / NodeSource)
+ *   - per-node lenses (NodeLens) + canonical view-models (CalendarModel)
  *   - the JSON-LD envelope + `buildJsonLd` helper
  *   - the knowledge-base configuration contract (KBConfig)
  *   - `kg://` identity URN helpers + the canonical relation taxonomy
@@ -15,6 +16,7 @@
  */
 
 export * from './graph.js';
+export * from './view-models.js';
 export * from './access.js';
 export * from './redaction.js';
 export * from './source-ref.js';
