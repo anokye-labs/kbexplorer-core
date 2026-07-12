@@ -3,12 +3,15 @@ import { describe, expect, it } from 'vitest';
 import {
   type Affordance,
   buildJsonLd,
+  type CalendarEvent,
+  type CalendarModel,
   type Connection,
   type JsonLd,
   type KBConfig,
   type KBEdge,
   type KBGraph,
   type KBNode,
+  type NodeLens,
   type NodeSource,
   type NodeSourceFile,
   type ResourceLink,
@@ -184,6 +187,96 @@ describe('KBNode affordances / links (baked per-retrieval snapshot)', () => {
     const roundTripped = JSON.parse(JSON.stringify(node)) as KBNode;
     expect(roundTripped.links?.[0]?.rel).toBe('staging-area');
     expect(roundTripped.links?.[0]?.href).toContain('/staging');
+  });
+});
+
+describe('KBNode lenses / defaultLens (per-node named views)', () => {
+  const base: KBNode = {
+    id: 'sprint-cal',
+    title: 'Sprint calendar',
+    cluster: 'planning',
+    content: '',
+    rawContent: '',
+    connections: [],
+    source: { type: 'structured', entityType: 'calendar' },
+  };
+
+  it('omits both fields for a node that offers no extra lenses (byte-identical serialization)', () => {
+    const serialized = JSON.parse(JSON.stringify(base)) as Record<string, unknown>;
+    expect(Object.keys(serialized)).not.toContain('lenses');
+    expect(Object.keys(serialized)).not.toContain('defaultLens');
+    expect(base.lenses).toBeUndefined();
+    expect(base.defaultLens).toBeUndefined();
+  });
+
+  it('carries named lenses whose viewer is an open registry key, and a defaultLens selector', () => {
+    const lenses: NodeLens[] = [
+      { id: 'month', label: 'Month', viewer: 'calendar-month' },
+      { id: 'raw', viewer: 'code' },
+    ];
+    const node: KBNode = { ...base, lenses, defaultLens: 'month' };
+    const roundTripped = JSON.parse(JSON.stringify(node)) as KBNode;
+
+    expect(roundTripped.lenses).toHaveLength(2);
+    expect(roundTripped.lenses?.[0]).toEqual({
+      id: 'month',
+      label: 'Month',
+      viewer: 'calendar-month',
+    });
+    // label is optional; viewer is an open string (no widening to a fixed enum).
+    expect(roundTripped.lenses?.[1]?.label).toBeUndefined();
+    expect(roundTripped.lenses?.[1]?.viewer).toBe('code');
+    expect(roundTripped.defaultLens).toBe('month');
+  });
+});
+
+describe('CalendarModel view-model (Tier 0 pure data)', () => {
+  it('stores a calendar model on node.data and declares a matching lens (zero render code)', () => {
+    const model: CalendarModel = {
+      events: [
+        {
+          start: '2026-07-11T14:00:00Z',
+          end: '2026-07-11T15:00:00Z',
+          summary: 'Planning sync',
+          location: 'Room 4',
+          category: 'meeting',
+        },
+        { start: '2026-07-12', allDay: true, summary: 'Team offsite' },
+      ],
+    };
+    const node: KBNode = {
+      id: 'sprint-cal',
+      title: 'Sprint calendar',
+      cluster: 'planning',
+      content: '',
+      rawContent: '',
+      connections: [],
+      source: { type: 'structured', entityType: 'calendar' },
+      data: { calendar: model },
+      lenses: [{ id: 'month', label: 'Month', viewer: 'calendar-month' }],
+      defaultLens: 'month',
+    };
+
+    const roundTripped = JSON.parse(JSON.stringify(node)) as KBNode;
+    const stored = roundTripped.data?.calendar as CalendarModel;
+    expect(stored.events).toHaveLength(2);
+    expect(stored.events[0]?.summary).toBe('Planning sync');
+    expect(stored.events[0]?.category).toBe('meeting');
+    expect(stored.events[1]?.allDay).toBe(true);
+    // The provider ships only data + a viewer key; core names no component.
+    expect(roundTripped.lenses?.[0]?.viewer).toBe('calendar-month');
+  });
+
+  it('treats end / allDay / summary / location / category as optional on an event', () => {
+    const minimal: CalendarEvent = { start: '2026-07-11' };
+    expect(minimal.end).toBeUndefined();
+    expect(minimal.allDay).toBeUndefined();
+    expect(minimal.summary).toBeUndefined();
+    expect(minimal.location).toBeUndefined();
+    expect(minimal.category).toBeUndefined();
+
+    const model: CalendarModel = { events: [minimal] };
+    expect(model.events).toHaveLength(1);
   });
 });
 

@@ -76,11 +76,22 @@ export type ProviderFactory = (config: ExternalProviderConfig) => GraphProvider;
  *   - `sources`     — the provider needs the `sources` map on
  *     {@link ProviderContext} (a host that doesn't populate it can't satisfy
  *     such a provider).
+ *   - `viewers`     — the provider requires the host to resolve and mount the
+ *     node/entity **viewers** shipped by its render half (see
+ *     {@link ProviderModule.views}). List this ONLY when the provider is useless
+ *     without rendering (a lens-only provider); a provider that also runs
+ *     data-only MUST NOT list it — shipping `views` is the optional *offer*, not
+ *     a requirement (see the degradation note on {@link ProviderModule.views}).
+ *   - `block-renderers` — the provider requires the host to mount the
+ *     **block renderers** its render half contributes (structured-block
+ *     rendering within a viewer). Same require-vs-offer rule as `viewers`.
  */
 export type ProviderCapability =
   | 'graph:nodes'
   | 'graph:edges'
   | 'sources'
+  | 'viewers'
+  | 'block-renderers'
   | (string & {});
 
 /**
@@ -104,6 +115,32 @@ export interface ProviderModule {
   apiVersion?: string;
   /** Capabilities this provider needs the host engine to support. */
   capabilities?: ProviderCapability[];
+  /**
+   * Package-relative specifier for the module carrying this provider's **render
+   * half** — its viewers and block renderers (e.g. `'./views'` or an
+   * exports-map subpath). This is a **specifier, never values**: core stays
+   * framework-free and only ever sees this string, not a component.
+   *
+   * **Module-graph-isolation rule (mandatory):** importing the provider's `.`
+   * (data) entry MUST NOT evaluate the render module graph. Declaring `views`
+   * points a *capable* host at a separately-importable entry; it must not pull
+   * React/DOM (or any render dependency) into the data half. Data-only hosts —
+   * the CLI's composite ingest runs in Node with no DOM/React, and the engine is
+   * render-free — import the `.` entry and load untouched, never resolving this
+   * specifier. A host that advertises the `'viewers'` / `'block-renderers'`
+   * capability dynamic-imports this entry to mount the render contributions.
+   *
+   * The imported module's shape (`ProviderViews { viewers?, blockRenderers? }`)
+   * is defined by `@anokye-labs/kbexplorer-view-kit`, NOT here: that UX-stack
+   * contract deliberately does not live in core.
+   *
+   * **Offer, not requirement:** the presence of `views` is the optional render
+   * *offer*. A provider that can also run data-only MUST NOT list `'viewers'` in
+   * {@link capabilities} — see the degradation note in the type docs and
+   * {@link checkProviderCompatibility}. Additive; absent → provider ships no
+   * render half.
+   */
+  views?: string;
 }
 
 /**
@@ -116,7 +153,7 @@ export interface ProviderModule {
  * Semantics (semver): a same-major version is compatible; a different major is
  * breaking. A provider may not require a newer minor than the host supports.
  */
-export const PROVIDER_API_VERSION = '1.0.0' as const;
+export const PROVIDER_API_VERSION = '1.1.0' as const;
 
 /** What a host engine advertises when guarding a loadable provider. */
 export interface ProviderHostContract {
