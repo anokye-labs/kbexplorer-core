@@ -83,6 +83,10 @@ back-compatible (defaults unchanged; `kg://` stays the default scheme, and
   `alias?` on the `person` node source (display names are never identity).
 - **Markdown sources** — `NodeSourceFile.format` now includes `'markdown'`.
 
+## Documentation
+
+- [Architecture: KBX contracts and boundaries](./docs/architecture.md)
+
 ## Develop
 
 ```bash
@@ -91,7 +95,6 @@ npm run typecheck
 npm run build      # tsup -> dist/ (esm + cjs + d.ts)
 npm test           # vitest
 ```
-
 
 ## Engines policy
 
